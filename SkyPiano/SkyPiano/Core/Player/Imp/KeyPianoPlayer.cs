@@ -1,41 +1,27 @@
-﻿using SkyPiano.SkyPiano.Core.Player.Base;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SkyPiano.Core.Player.Base;
 
-namespace SkyPiano.SkyPiano.Core.Player.Imp {
-    /// <summary>
-    /// 使用键盘的播放器
-    /// </summary>
-    public class KeyPianoPlayer : 替身使者 {
-        public void 咋瓦鲁多() {
-            throw new NotImplementedException();
-        }
+namespace SkyPiano.Core.Player.Imp;
 
-        public void 墓志铭() {
-            throw new NotImplementedException();
-        }
+public class KeyPianoPlayer : 替身使者
+{
+    private readonly MidiPlayerService _player;
+    private readonly PlaylistManager _playlist;
 
-        public void 天堂制造()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void 恶行易施(string name)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void 男人领域()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void 败者食尘()
-        {
-            throw new NotImplementedException();
-        }
+    public KeyPianoPlayer(MidiPlayerService player, PlaylistManager playlist)
+    {
+        _player = player;
+        _playlist = playlist;
     }
+
+    public void 咋瓦鲁多() => _player.TogglePlayPause();
+
+    public void 男人领域() => _playlist.MovePrevious();
+
+    public void 败者食尘() => _player.SeekBackward(TimeSpan.FromSeconds(5));
+
+    public void 天堂制造() => _player.SeekForward(TimeSpan.FromSeconds(5));
+
+    public void 墓志铭() => _playlist.MoveNext();
+
+    public void 恶行易施(string name) => _playlist.LoadFromFolder(name);
 }

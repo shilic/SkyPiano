@@ -1,24 +1,23 @@
-﻿using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using SkyPiano.ViewModel;
 
-namespace SkyPiano
+namespace SkyPiano;
+
+public partial class MainWindow : Window
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
+    private readonly MainViewModel _vm;
+
+    public MainWindow()
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+        _vm = new MainViewModel();
+        DataContext = _vm;
+        Loaded += OnLoaded;
+        Closing += (_, _) => _vm.Dispose();
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        _vm.OpenFolder();
     }
 }

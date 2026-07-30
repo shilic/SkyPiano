@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SkyPiano.SkyPiano.Core.Player.Base {
+namespace SkyPiano.Core.Player.Base {
     /// <summary>
     /// 替身使者; <br></br>
     /// 1.咋瓦鲁多：暂停播放。 <br></br>
