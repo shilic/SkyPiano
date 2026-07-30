@@ -1,31 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace SkyPiano.Core.Player.Base;
 
-namespace SkyPiano.Core.Player.Base {
+/// <summary>
+/// 替身使者 — 播放控制接口，定义所有播放器必须实现的操控方法。<br/>
+/// 命名灵感来源于 JOJO 的奇妙冒险中的替身能力：
+/// <list type="number">
+/// <item><b>咋瓦鲁多（The World）</b>：暂停 / 恢复播放。</item>
+/// <item><b>男人领域（Mandom）</b>：切换到上一首曲目。</item>
+/// <item><b>败者食尘（Bites the Dust）</b>：快退。</item>
+/// <item><b>天堂制造（Made in Heaven）</b>：快进。</item>
+/// <item><b>墓志铭（Epitaph）</b>：切换到下一首曲目。</item>
+/// <item><b>恶行易施（Dirty Deeds Done Dirt Cheap）</b>：切换播放列表（加载指定文件夹）。</item>
+/// </list>
+/// </summary>
+public interface 替身使者
+{
     /// <summary>
-    /// 替身使者; <br></br>
-    /// 1.咋瓦鲁多：暂停播放。 <br></br>
-    /// 2.男人领域：上一首。 <br></br>
-    /// 3.败者食尘：快退。 <br></br>
-    /// 4.天堂制造：快进。 <br></br>
-    /// 5.墓志铭：下一首。 <br></br>
-    /// 6.恶行易施：切换播放列表。 <br></br>
+    /// 暂停 / 恢复播放。当前正在播放时暂停，已暂停时恢复播放。
     /// </summary>
-    public interface 替身使者 {
-        /// <summary>  1.咋瓦鲁多：暂停播放。  </summary>
-        void 咋瓦鲁多();
-        /// <summary>  2.男人领域：上一首。  </summary>
-        void 男人领域();
-        /// <summary>  3.败者食尘：快退。  </summary>
-        void 败者食尘();
-        /// <summary>  4.天堂制造：快进。  </summary>
-        void 天堂制造();
-        /// <summary>  5.墓志铭：下一首。  </summary>  
-        void 墓志铭();
-        /// <summary>  6.恶行易施：切换播放列表。  </summary>
-        void 恶行易施(string name);
-    }
+    void 咋瓦鲁多();
+
+    /// <summary>
+    /// 切换到上一首曲目。如果当前是第一首，则循环到最后一首。
+    /// </summary>
+    void 男人领域();
+
+    /// <summary>
+    /// 快退指定时间（默认 5 秒）。
+    /// </summary>
+    void 败者食尘();
+
+    /// <summary>
+    /// 快进指定时间（默认 5 秒）。
+    /// </summary>
+    void 天堂制造();
+
+    /// <summary>
+    /// 切换到下一首曲目。如果当前是最后一首，则循环到第一首。
+    /// </summary>
+    void 墓志铭();
+
+    /// <summary>
+    /// 切换播放列表到指定文件夹，扫描其中所有 .mid 文件。
+    /// </summary>
+    /// <param name="name">包含 MIDI 文件的文件夹路径。</param>
+    void 恶行易施(string name);
 }
