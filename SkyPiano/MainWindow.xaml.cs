@@ -5,7 +5,7 @@ namespace SkyPiano;
 
 /// <summary>
 /// 主窗口的代码隐藏，最小化设计。
-/// 仅负责创建 ViewModel、设置 DataContext、在窗口加载时打开文件夹选择对话框，
+/// 仅负责创建 ViewModel、设置 DataContext、窗口加载时自动读取默认 MIDI 文件夹，
 /// 以及在窗口关闭时释放 ViewModel 资源。
 /// 所有业务逻辑均在 <see cref="MainViewModel"/> 中处理。
 /// </summary>
@@ -27,7 +27,7 @@ public partial class MainWindow : Window
         _vm = new MainViewModel();
         DataContext = _vm;
 
-        // 窗口加载完成时弹出文件夹选择对话框
+        // 窗口加载完成时自动读取默认 MIDI 文件夹
         Loaded += OnLoaded;
 
         // 窗口关闭时释放资源（停止定时器、释放音频设备）
@@ -35,12 +35,13 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 窗口加载完成后的回调，自动弹出文件夹选择对话框让用户选择 MIDI 文件夹。
+    /// 窗口加载完成后的回调，自动加载默认 MIDI 文件夹。
+    /// 如果默认文件夹不存在则自动创建。
     /// </summary>
     /// <param name="sender">事件源（当前窗口）。</param>
     /// <param name="e">路由事件参数。</param>
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _vm.OpenFolder();
+        _vm.LoadDefaultFolder();
     }
 }

@@ -10,19 +10,19 @@ namespace SkyPiano.ViewModel;
 /// 主窗口的视图模型，作为 UI 和音频引擎之间的桥梁。
 /// 负责：
 /// <list type="bullet">
-/// <item>创建并管理 21 个键盘键位的视图模型集合。</item>
+/// <item>启动时自动加载默认 MIDI 文件夹（不存在则创建）。</item>
+/// <item>管理播放列表（曲目集合、当前选中曲目标记）。</item>
 /// <item>通过 <see cref="DispatcherTimer"/> 定时轮询播放进度。</item>
-/// <item>订阅 <see cref="MidiPlayerService"/> 的音符事件以驱动键盘高亮。</item>
 /// <item>暴露播放控制命令（播放/暂停、上下曲、快进/快退）给 UI 绑定。</item>
 /// <item>管理自动切歌：曲目播放完毕后自动切换到下一首。</item>
 /// </list>
 /// </summary>
 public class MainViewModel : INotifyPropertyChanged, IDisposable
 {
-    /// <summary>MIDI 音频引擎，负责实际播放和音符事件。</summary>
+    /// <summary>MIDI 音频引擎，负责实际播放。</summary>
     private readonly MidiPlayerService _player;
 
-    /// <summary>播放列表管理器，负责曲目导航。</summary>
+    /// <summary>播放列表管理器，负责曲目导航和文件列表。</summary>
     private readonly PlaylistManager _playlist;
 
     /// <summary>UI 定时器，每 100ms 刷新播放进度。</summary>
@@ -31,25 +31,27 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     /// <summary>UI 线程同步上下文，在构造时捕获。</summary>
     private readonly SynchronizationContext _sync = SynchronizationContext.Current!;
 
-    /// <summary>MIDI 音符编号 → 键位视图模型的快速查找字典。</summary>
-    private readonly Dictionary<int, KeyNoteViewModel> _keyLookup = new();
+    /// <summary>
+    /// 默认 MIDI 文件夹路径：用户文档目录下的 "SkyPiano/MIDI"。
+    /// </summary>
+    private static readonly string DefaultMidiFolder = System.IO.Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SkyPiano", "MIDI");
 
     // ---- 属性变更事件 ----
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    // ---- 键位集合 ----
+    // ---- 播放列表集合 ----
 
     /// <summary>
-    /// 21 个钢琴键位的视图模型集合，供 UI 的 ItemsControl 绑定。
+    /// 播放列表中的所有曲目项，供 UI 的 ListBox 绑定。
     /// </summary>
-    public ObservableCollection<KeyNoteViewModel> KeyViewModels { get; } = new();
+    public ObservableCollection<TrackItemViewModel> PlaylistItems { get; } = new();
 
     // ---- 构造函数 ----
 
     /// <summary>
-    /// 构造 MainViewModel，初始化音频引擎、播放列表管理器、21 键键盘和进度轮询定时器。
-    /// 构造完成后需调用 <see cref="OpenFolder"/> 选择 MIDI 文件夹才能开始播放。
+    /// 构造 MainViewModel，初始化音频引擎、播放列表管理器和进度轮询定时器。
     /// </summary>
     public MainViewModel()
     {
@@ -57,17 +59,10 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _player = new MidiPlayerService();
         _player.SetSyncContext(_sync);
 
-        // 初始化播放列表并订阅曲目和播放完成事件
+        // 初始化播放列表并订阅曲目切换和播放完成事件
         _playlist = new PlaylistManager();
         _playlist.TrackChanged += OnTrackChanged;
         _player.Finished += OnTrackFinished;
-
-        // 订阅音符事件用于键盘可视化
-        _player.NotePlayed += OnNotePlayed;
-        _player.NoteStopped += OnNoteStopped;
-
-        // 初始化 21 个钢琴键位
-        InitKeys();
 
         // 启动定时器，每 100ms 刷新进度条和时间显示
         _timer = new DispatcherTimer(
@@ -80,31 +75,6 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
             },
             Dispatcher.CurrentDispatcher);
         _timer.Start();
-    }
-
-    /// <summary>
-    /// 初始化 21 个钢琴键位（3 个八度 × 7 个白键）。
-    /// 下排 Z~M 对应 C3~B3，中排 A~J 对应 C4~B4，上排 Q~U 对应 C5~B5。
-    /// </summary>
-    private void InitKeys()
-    {
-        // 三组键位：下排、中排、上排，每组 7 个白键
-        var keys = new (string label, int midi)[]
-        {
-            // 下排：C3~B3
-            ("Z", 48), ("X", 50), ("C", 52), ("V", 53), ("B", 55), ("N", 57), ("M", 59),
-            // 中排：C4~B4
-            ("A", 60), ("S", 62), ("D", 64), ("F", 65), ("G", 67), ("H", 69), ("J", 71),
-            // 上排：C5~B5
-            ("Q", 72), ("W", 74), ("E", 76), ("R", 77), ("T", 79), ("Y", 81), ("U", 83),
-        };
-
-        foreach (var (label, midi) in keys)
-        {
-            var vm = new KeyNoteViewModel(label, midi);
-            KeyViewModels.Add(vm);          // 加入 UI 绑定集合
-            _keyLookup[midi] = vm;          // 加入快速查找字典（用于音符事件→键位联动）
-        }
     }
 
     // ---- UI 绑定属性 ----
@@ -177,6 +147,31 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    /// <summary>ListBox 选中索引的后备字段。</summary>
+    private int _selectedTrackIndex = -1;
+
+    /// <summary>
+    /// 播放列表中当前选中的曲目索引（从 0 开始，-1 表示无选中）。
+    /// 与 ListBox 双向绑定，用户点击列表项时自动切换曲目。
+    /// </summary>
+    public int SelectedTrackIndex
+    {
+        get => _selectedTrackIndex;
+        set
+        {
+            if (_selectedTrackIndex == value) return;
+
+            // 索引有效且不同于当前播放索引时，切换到对应曲目
+            if (value >= 0 && value < _playlist.Count && value != _playlist.CurrentIndex)
+            {
+                _playlist.SelectTrack(value);
+            }
+
+            _selectedTrackIndex = value;
+            OnPropertyChanged(nameof(SelectedTrackIndex));
+        }
+    }
+
     // ---- 播放控制命令 ----
 
     /// <summary>播放/暂停命令的后备字段（惰性初始化）。</summary>
@@ -225,11 +220,19 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     public ICommand FastForwardCommand => _ffCommand ??= new RelayCommand(
         () => _player.SeekForward(TimeSpan.FromSeconds(5)));
 
+    /// <summary>切换文件夹命令的后备字段。</summary>
+    private ICommand? _switchFolderCommand;
+
+    /// <summary>
+    /// 切换文件夹命令。弹出文件夹选择对话框，让用户切换到其他 MIDI 文件夹。
+    /// </summary>
+    public ICommand SwitchFolderCommand => _switchFolderCommand ??= new RelayCommand(OpenFolder);
+
     // ---- 曲目管理 ----
 
     /// <summary>
     /// 当播放列表切换曲目时被回调。
-    /// 加载新曲目到音频引擎并自动开始播放，同时更新 UI 的曲目名和索引。
+    /// 加载新曲目到音频引擎并自动开始播放，同时更新 UI 的曲目名、索引和高亮。
     /// </summary>
     /// <param name="path">新曲目的完整文件路径。如果为 <c>null</c> 则忽略（列表为空）。</param>
     private void OnTrackChanged(string? path)
@@ -240,10 +243,15 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _player.LoadFile(path);
         _player.Play();
 
-        // 更新 UI 显示
+        // 更新顶部信息栏
         CurrentTrackName = System.IO.Path.GetFileNameWithoutExtension(path);
         TrackIndex = $"{_playlist.CurrentIndex + 1}/{_playlist.Count}";
         IsPlaying = true;
+
+        // 同步 ListBox 选中项和列表高亮
+        _selectedTrackIndex = _playlist.CurrentIndex;
+        OnPropertyChanged(nameof(SelectedTrackIndex));
+        UpdateTrackHighlight();
     }
 
     /// <summary>
@@ -254,50 +262,68 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
         _playlist.MoveNext();
     }
 
-    // ---- 音符事件：驱动键盘可视化 ----
+    /// <summary>
+    /// 遍历所有曲目项，将 <see cref="TrackItemViewModel.IsPlaying"/> 更新为
+    /// 仅当前播放的索引为 <c>true</c>，其余为 <c>false</c>。
+    /// </summary>
+    private void UpdateTrackHighlight()
+    {
+        var current = _playlist.CurrentIndex;
+        for (var i = 0; i < PlaylistItems.Count; i++)
+            PlaylistItems[i].IsPlaying = i == current;
+    }
+
+    // ---- 文件夹管理 ----
 
     /// <summary>
-    /// 音频引擎报告有音符开始播放。查找对应的键位并设置高亮。
+    /// 加载默认 MIDI 文件夹（Documents/SkyPiano/MIDI）。
+    /// 如果文件夹不存在则自动创建。
+    /// 在窗口加载完成时自动调用。
     /// </summary>
-    /// <param name="midi">MIDI 音符编号（0-127）。</param>
-    /// <param name="velocity">音符力度（0-127），当前版本未使用。</param>
-    private void OnNotePlayed(int midi, byte velocity)
+    public void LoadDefaultFolder()
     {
-        // 查找是否有键位对应此 MIDI 编号
-        // 注意：只有 21 个白键对应的 MIDI 值才会被找到，黑键的 MIDI 值会被忽略
-        if (_keyLookup.TryGetValue(midi, out var vm))
-            vm.IsActive = true;
+        // 确保默认文件夹存在，不存在则创建
+        if (!System.IO.Directory.Exists(DefaultMidiFolder))
+            System.IO.Directory.CreateDirectory(DefaultMidiFolder);
+
+        LoadFolder(DefaultMidiFolder);
     }
 
     /// <summary>
-    /// 音频引擎报告有音符停止播放。查找对应的键位并取消高亮。
+    /// 弹出文件夹选择对话框，让用户手动切换到另一个文件夹。
+    /// 选择后加载播放列表并自动播放第一首。
     /// </summary>
-    /// <param name="midi">MIDI 音符编号（0-127）。</param>
-    private void OnNoteStopped(int midi)
+    private void OpenFolder()
     {
-        if (_keyLookup.TryGetValue(midi, out var vm))
-            vm.IsActive = false;
-    }
-
-    // ---- 文件夹选择 ----
-
-    /// <summary>
-    /// 打开文件夹选择对话框，让用户选择包含 MIDI 文件的文件夹。
-    /// 选择后自动加载第一首曲目并开始播放。
-    /// 在窗口加载完成后自动调用。
-    /// </summary>
-    public void OpenFolder()
-    {
-        // 使用 WPF 原生的 OpenFolderDialog（Windows Vista 及以上支持）
         var dlg = new Microsoft.Win32.OpenFolderDialog
         {
             Title = "选择 MIDI 文件夹",
-            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            InitialDirectory = DefaultMidiFolder
         };
 
-        // 用户确认选择后加载播放列表
-        if (dlg.ShowDialog() == true)
-            _playlist.LoadFromFolder(dlg.FolderName);
+        if (dlg.ShowDialog() != true) return;
+        LoadFolder(dlg.FolderName);
+    }
+
+    /// <summary>
+    /// 加载指定文件夹中所有 .mid 文件，重建播放列表并自动开始播放第一首个。
+    /// </summary>
+    /// <param name="folderPath">包含 MIDI 文件的文件夹路径。</param>
+    private void LoadFolder(string folderPath)
+    {
+        // 加载播放列表（内部自动选中第一首并触发 TrackChanged → OnTrackChanged → 播放）
+        _playlist.LoadFromFolder(folderPath);
+
+        // 根据新加载的曲目列表重建 UI 列表集合
+        PlaylistItems.Clear();
+        foreach (var trackPath in _playlist.Tracks)
+        {
+            // 文件名不含扩展名，作为列表显示文本
+            var fileName = System.IO.Path.GetFileNameWithoutExtension(trackPath);
+            PlaylistItems.Add(new TrackItemViewModel(fileName, trackPath));
+        }
+
+        // LoadFromFolder 内部已触发 TrackChanged → OnTrackChanged 会处理高亮和播放
     }
 
     // ---- INotifyPropertyChanged 辅助 ----

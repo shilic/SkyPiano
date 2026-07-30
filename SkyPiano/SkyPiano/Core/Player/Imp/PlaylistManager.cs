@@ -31,6 +31,11 @@ public class PlaylistManager
         _currentIndex >= 0 && _currentIndex < _tracks.Length ? _tracks[_currentIndex] : null;
 
     /// <summary>
+    /// 播放列表中所有曲目的文件路径列表（只读）。
+    /// </summary>
+    public IReadOnlyList<string> Tracks => _tracks;
+
+    /// <summary>
     /// 当曲目发生切换时触发。参数为新的曲目文件路径，列表为空时为 <c>null</c>。
     /// </summary>
     public event Action<string?>? TrackChanged;
@@ -53,6 +58,24 @@ public class PlaylistManager
         _currentIndex = _tracks.Length > 0 ? 0 : -1;
 
         // 通知外部曲目已切换
+        TrackChanged?.Invoke(CurrentTrack);
+    }
+
+    /// <summary>
+    /// 选中指定索引的曲目并触发 <see cref="TrackChanged"/> 事件。
+    /// 如果索引相同则不重复触发。
+    /// </summary>
+    /// <param name="index">要选中的曲目索引（从 0 开始）。</param>
+    /// <exception cref="ArgumentOutOfRangeException">索引超出范围时抛出此异常。</exception>
+    public void SelectTrack(int index)
+    {
+        if (index < 0 || index >= _tracks.Length)
+            throw new ArgumentOutOfRangeException(nameof(index));
+
+        // 避免重复选中同一首曲目时重复触发事件
+        if (index == _currentIndex) return;
+
+        _currentIndex = index;
         TrackChanged?.Invoke(CurrentTrack);
     }
 
