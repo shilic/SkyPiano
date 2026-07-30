@@ -1,0 +1,31 @@
+# .gitignore for WPF (.NET Core / .NET 5+)
+# 增强版：包含 NuGet 和构建缓存
+
+## Visual Studio / VS Code 生成的文件
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+
+## .NET Core / .NET 5+ 构建缓存与输出
+[Bb]in/
+[Oo]bj/
+*.deps.json
+*.runtimeconfig.json
+
+## NuGet 包与依赖缓存
+packages/
+*.nupkg
+project.lock.json
+project.assets.json
+*.nuget.props
+*.nuget.targets
+
+## JetBrains Rider
+.idea/
+*.DotSettings.user
+
+## Windows 临时文件
+Thumbs.db
+*.tmp
