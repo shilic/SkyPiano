@@ -12,15 +12,14 @@ public static class NoteToKeyMapper
     /// 中排（中八度 C4~B4）：A→C4(60), S→D4(62), D→E4(64), F→F4(65), G→G4(67), H→A4(69), J→B4(71)<br/>
     /// 上排（高八度 C5~B5）：Q→C5(72), W→D5(74), E→E5(76), R→F5(77), T→G5(79), Y→A5(81), U→B5(83)
     /// </summary>
-    private static readonly (char key, int midi)[] KeyMap =
-    {
+    private static readonly (char key, int midi)[] KeyMap = [
         // 下排：低八度（C3~B3），MIDI 48~59
         ('Z', 48), ('X', 50), ('C', 52), ('V', 53), ('B', 55), ('N', 57), ('M', 59),
         // 中排：中八度（C4~B4），MIDI 60~71
         ('A', 60), ('S', 62), ('D', 64), ('F', 65), ('G', 67), ('H', 69), ('J', 71),
         // 上排：高八度（C5~B5），MIDI 72~83
         ('Q', 72), ('W', 74), ('E', 76), ('R', 77), ('T', 79), ('Y', 81), ('U', 83),
-    };
+    ];
 
     /// <summary>MIDI 编号 → 键盘字符的快速查找字典。</summary>
     private static readonly Dictionary<int, char> MidiToKey = KeyMap.ToDictionary(x => x.midi, x => x.key);
@@ -32,8 +31,7 @@ public static class NoteToKeyMapper
     /// </summary>
     /// <param name="midiNumber">MIDI 音符编号（0-127）。</param>
     /// <returns>对应的键盘字符（如 'A'），无匹配时返回 <c>null</c>。</returns>
-    public static char? GetKeyForMidi(int midiNumber)
-    {
+    public static char? GetKeyForMidi(int midiNumber) {
         // 超出三组八度范围（48=C3 ~ 83=B5）则不映射
         if (midiNumber < 48 || midiNumber > 83) return null;
 
@@ -50,11 +48,9 @@ public static class NoteToKeyMapper
     /// <param name="key">键盘字符（不区分大小写），如 'A'。</param>
     /// <returns>匹配的 MIDI 音符编号。</returns>
     /// <exception cref="ArgumentException">字符不在 21 键映射中时抛出此异常。</exception>
-    public static int GetMidiForKey(char key)
-    {
+    public static int GetMidiForKey(char key) {
         var upper = char.ToUpperInvariant(key);
-        foreach (var (k, midi) in KeyMap)
-        {
+        foreach (var (k, midi) in KeyMap) {
             if (k == upper) return midi;
         }
         throw new ArgumentException($"键盘按键 '{key}' 不在 21 键映射范围内。");
