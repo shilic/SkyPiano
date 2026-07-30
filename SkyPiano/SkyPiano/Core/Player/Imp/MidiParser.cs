@@ -42,8 +42,7 @@ public static class MidiParser
         var notes = midiFile.GetNotes();
 
         var events = new List<KeyEvent>();
-        foreach (var note in notes)
-        {
+        foreach (var note in notes) {
             // 将 MIDI 音符编号映射到键盘按键，无映射则跳过
             var key = NoteToKeyMapper.GetKeyForMidi(note.NoteNumber);
             if (key == null) continue;
@@ -52,8 +51,7 @@ public static class MidiParser
             var startUs = note.TimeAs<MetricTimeSpan>(tempoMap).TotalMicroseconds;
             var lengthUs = note.LengthAs<MetricTimeSpan>(tempoMap).TotalMicroseconds;
 
-            events.Add(new KeyEvent
-            {
+            events.Add(new KeyEvent {
                 Key = key.Value,
                 StartMicroseconds = startUs,
                 EndMicroseconds = startUs + lengthUs,
