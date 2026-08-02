@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Data;
 using SkyPiano.ViewModel;
 
 namespace SkyPiano;
@@ -12,8 +13,24 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
 
-    public MainWindow()
+    // BindingExpression
+
+    public static int GetMyProperty(DependencyObject obj)
     {
+        return (int)obj.GetValue(MyPropertyProperty);
+    }
+
+    public static void SetMyProperty(DependencyObject obj, int value)
+    {
+        obj.SetValue(MyPropertyProperty, value);
+    }
+
+    // Using a DependencyProperty as the backing store for MyProperty.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty MyPropertyProperty =
+        DependencyProperty.RegisterAttached("MyProperty", typeof(int), typeof(MainWindow), new PropertyMetadata(0));
+
+
+    public MainWindow() {
         InitializeComponent();
 
         _vm = new MainViewModel();
@@ -24,10 +41,14 @@ public partial class MainWindow : Window
 
         // 窗口关闭时释放资源
         Closing += (_, _) => _vm.Dispose();
+        //Binding binding = new Binding() { 
+        //    Source = ""
+        //};
+        //BindingOperations.SetBinding
+
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
-    {
+    private void OnLoaded(object sender, RoutedEventArgs e) {
         _vm.LoadDefaultFolder();
     }
 }

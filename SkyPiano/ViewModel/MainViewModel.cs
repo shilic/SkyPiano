@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Input;
 using System.Windows.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using SkyPiano.Core.Player.Imp;
 
 namespace SkyPiano.ViewModel;
@@ -153,6 +155,8 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     // ---- 播放控制命令 ----
 
+    //RoutedCommand
+    //CommandBinding
     /// <summary>
     /// 播放 / 暂停命令。
     /// </summary>
@@ -189,6 +193,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
 
     // ---- 内部方法 ----
 
+    //[RelayCommand]
     /// <summary>
     /// 播放列表切换曲目时的回调。重建播放列表 UI 集合并更新高亮。
     /// </summary>
