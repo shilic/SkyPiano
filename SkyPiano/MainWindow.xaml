@@ -8,6 +8,7 @@
         d:DataContext="{d:DesignInstance vm:MainViewModel}"
         Title="SkyPiano" Height="420" Width="550" MinHeight="350" MinWidth="450"
         WindowStartupLocation="CenterScreen" Background="#1E1E2E">
+    <!--  mc:Ignorable="d" 这行告诉编译器可以忽略d:开头的属性 -->
 
     <Window.Resources>
         <Style x:Key="IconButton" TargetType="Button">
