@@ -37,18 +37,34 @@ public class KeyPianoPlayer : 替身使者, IDisposable {
         else{
             _scheduler.Play();
         }
+        StateChanged?.Invoke();
     }
     /// <summary> 切换到上一首曲目。 /summary>
-    public void 男人领域() => _playlist.MovePrevious();
+    public void 男人领域() { 
+        _playlist.MovePrevious();
+        StateChanged?.Invoke();
+    }
     /// <summary> 快退 5 秒。</summary>
-    public void 败者食尘() => _scheduler.SeekBackward(TimeSpan.FromSeconds(5));
+    public void 败者食尘() { 
+        _scheduler.SeekBackward(TimeSpan.FromSeconds(5));
+        StateChanged?.Invoke();
+    }
     /// <summary> 快进 5 秒。 </summary>
-    public void 天堂制造() => _scheduler.SeekForward(TimeSpan.FromSeconds(5));
+    public void 天堂制造() { 
+        _scheduler.SeekForward(TimeSpan.FromSeconds(5));
+        StateChanged?.Invoke();
+    }
     /// <summary> 切换到下一首曲目。 </summary>
-    public void 墓志铭() => _playlist.MoveNext();
+    public void 墓志铭()  { 
+        _playlist.MoveNext();
+        StateChanged?.Invoke();
+    }
     /// <summary> 切换播放列表，加载指定文件夹中的所有 .mid 文件。 </summary>
     /// <param name="name">包含 MIDI 文件的文件夹路径。</param>
-    public void 恶行易施(string name) => _playlist.LoadFromFolder(name);
+    public void 恶行易施(string name) { 
+        _playlist.LoadFromFolder(name);
+        StateChanged?.Invoke();
+    }
 
     // ---- 公开属性（供 ViewModel 绑定） ----
     /// <summary> 当前是否正在播放。 </summary>
@@ -65,7 +81,7 @@ public class KeyPianoPlayer : 替身使者, IDisposable {
     public event Action? StateChanged;
 
     // ---- 内部逻辑 ----
-    /// <summary> 播放列表切换曲目时的回调：解析新曲目 → 加载调度器 → 自动开始播放。 </summary>
+    /// <summary> 播放列表切换曲目时的回调：解析新曲目 → 加载调度器（不自动播放）。 </summary>
     /// <param name="path">新曲目的完整文件路径，<c>null</c> 表示列表为空。</param>
     private void OnTrackChanged(string? path) {
         if (path == null) return;
@@ -73,12 +89,9 @@ public class KeyPianoPlayer : 替身使者, IDisposable {
         // 停止当前播放
         _scheduler.Stop();
 
-        // 解析 MIDI 文件 → 按键事件列表
+        // 解析 MIDI 文件 → 按键事件列表，加载到调度器
         var (events, duration) = MidiParser.Parse(path);
-
-        // 加载到调度器并开始播放
         _scheduler.Load(events, duration);
-        _scheduler.Play();
 
         TrackChanged?.Invoke();
         StateChanged?.Invoke();

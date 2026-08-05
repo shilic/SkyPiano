@@ -42,8 +42,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable {
     /// <summary>
     /// 构造 MainViewModel，初始化播放器、播放列表和进度轮询定时器。
     /// </summary>
-    public MainViewModel()
-    {
+    public MainViewModel() {
         // 播放列表管理器
         _playlist = new PlaylistManager();
 
@@ -57,8 +56,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable {
         _timer = new DispatcherTimer(
             TimeSpan.FromMilliseconds(100),
             DispatcherPriority.Normal,
-            (_, _) =>
-            {
+            (_, _) => {
                 OnPropertyChanged(nameof(Progress));
                 OnPropertyChanged(nameof(CurrentTimeDisplay));
             },
@@ -115,8 +113,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable {
     /// <summary>
     /// 当前是否正在播放。用于切换播放/暂停按钮的图标。
     /// </summary>
-    public bool IsPlaying
-    {
+    public bool IsPlaying {
         get => _isPlaying;
         set { _isPlaying = value; OnPropertyChanged(nameof(IsPlaying)); }
     }
@@ -128,11 +125,9 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable {
     /// 播放列表中当前选中的曲目索引（从 0 开始，-1 表示无选中）。
     /// 与 ListBox 双向绑定，用户点击列表项时自动切换曲目。
     /// </summary>
-    public int SelectedTrackIndex
-    {
+    public int SelectedTrackIndex {
         get => _selectedTrackIndex;
-        set
-        {
+        set  {
             if (_selectedTrackIndex == value) return;
 
             if (value >= 0 && value < _playlist.Count && value != _playlist.CurrentIndex)
@@ -150,35 +145,24 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable {
     /// <summary>
     /// 播放 / 暂停命令。
     /// </summary>
-    public ICommand PlayPauseCommand => new RelayCommand(() =>
-    {
+    public ICommand PlayPauseCommand => new RelayCommand(() => {
         _player.咋瓦鲁多();
         RefreshState();
     });
 
-    /// <summary>
-    /// 下一首命令。
-    /// </summary>
+    /// <summary> 下一首命令。  </summary>
     public ICommand NextCommand => new RelayCommand(() => _player.墓志铭());
 
-    /// <summary>
-    /// 上一首命令。
-    /// </summary>
+    /// <summary> 上一首命令。  </summary>
     public ICommand PrevCommand => new RelayCommand(() => _player.男人领域());
 
-    /// <summary>
-    /// 快退命令（后退 5 秒）。
-    /// </summary>
+    /// <summary> 快退命令（后退 5 秒）。 </summary>
     public ICommand RewindCommand => new RelayCommand(() => _player.败者食尘());
 
-    /// <summary>
-    /// 快进命令（前进 5 秒）。
-    /// </summary>
+    /// <summary>  快进命令（前进 5 秒）。 </summary>
     public ICommand FastForwardCommand => new RelayCommand(() => _player.天堂制造());
 
-    /// <summary>
-    /// 切换 MIDI 文件夹命令。
-    /// </summary>
+    /// <summary> 切换 MIDI 文件夹命令。 </summary>
     public ICommand SwitchFolderCommand => new RelayCommand(OpenFolder);
 
     // ---- 内部方法 ----
@@ -188,14 +172,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable {
     /// 播放列表切换曲目时的回调。重建播放列表 UI 集合并更新高亮。
     /// </summary>
     /// <param name="path">新曲目文件路径，<c>null</c> 表示列表为空。</param>
-    private void OnTrackChanged(string? path)
-    {
+    private void OnTrackChanged(string? path) {
         if (path == null) return;
 
         // 重建 UI 播放列表（仅在首次加载或切换文件夹时重建）
         if (PlaylistItems.Count != _playlist.Count ||
-            (PlaylistItems.Count > 0 && PlaylistItems[0].FilePath != _playlist.Tracks[0]))
-        {
+            (PlaylistItems.Count > 0 && PlaylistItems[0].FilePath != _playlist.Tracks[0])) {
             RebuildPlaylistItems();
         }
 
@@ -207,14 +189,14 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable {
     /// <summary>
     /// 刷新播放状态到 UI（IsPlaying、TrackIndex、曲目高亮、选中索引）。
     /// </summary>
-    private void RefreshState()
-    {
+    private void RefreshState() {
         IsPlaying = _player.IsPlaying;
         TrackIndex = _playlist.Count > 0 ? $"{_playlist.CurrentIndex + 1}/{_playlist.Count}" : "";
 
         // 同步选中索引和高亮
-        _selectedTrackIndex = _playlist.CurrentIndex;
-        OnPropertyChanged(nameof(SelectedTrackIndex));
+        //_selectedTrackIndex = _playlist.CurrentIndex;
+        //OnPropertyChanged(nameof(SelectedTrackIndex));
+        SelectedTrackIndex = _playlist.CurrentIndex;
         UpdateTrackHighlight();
     }
 

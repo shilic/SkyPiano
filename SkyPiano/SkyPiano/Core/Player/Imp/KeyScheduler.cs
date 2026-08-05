@@ -175,7 +175,7 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
         }
         _pausedElapsedUs = newElapsed;
         _nextIndex = newIndex;
-        ReleaseAll();
+        // ReleaseAll();
         Play();
     }
 

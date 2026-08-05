@@ -83,8 +83,7 @@ public class PlaylistManager
     /// 切换到下一首曲目。到达列表末尾时自动循环回第一首。
     /// 如果列表为空则无操作。
     /// </summary>
-    public void MoveNext()
-    {
+    public void MoveNext() {
         if (_tracks.Length == 0) return;
 
         // 取模运算实现循环：最后一首之后回到第一首
