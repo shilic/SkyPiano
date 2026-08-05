@@ -66,7 +66,6 @@ public class KeyScheduler(IPerformer performer) : IDisposable
     #endregion 需要的依赖注入
 
     /// <summary>
-    /// 加载按键事件列表，将其展平为按下/释放原子事件并排序。
     /// 加载乐谱。加载后不会自动播放，需调用 <see cref="Play"/>。
     /// </summary>
     public void Load(Score score)
