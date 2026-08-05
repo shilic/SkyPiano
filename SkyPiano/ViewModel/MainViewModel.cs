@@ -19,9 +19,8 @@ namespace SkyPiano.ViewModel;
 /// <item>管理自动切歌：曲目播放完毕后自动切换到下一首。</item>
 /// </list>
 /// </summary>
-public class MainViewModel : INotifyPropertyChanged, IDisposable
-{
-    /// <summary>键盘钢琴播放器，将 MIDI 转为键盘按键输出。</summary>
+public class MainViewModel : INotifyPropertyChanged, IDisposable {
+    /// <summary> 键盘钢琴播放器，将 MIDI 转为键盘按键输出。 </summary>
     private readonly KeyPianoPlayer _player;
 
     /// <summary>播放列表管理器，负责曲目导航和文件列表。</summary>
@@ -30,21 +29,12 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     /// <summary>UI 定时器，每 100ms 刷新播放进度。</summary>
     private readonly DispatcherTimer _timer;
 
-    /// <summary>
-    /// 默认 MIDI 文件夹路径：用户文档目录下的 "SkyPiano/MIDI"。
-    /// </summary>
+    /// <summary>  默认 MIDI 文件夹路径：用户文档目录下的 "SkyPiano/MIDI"。  </summary>
     private static readonly string DefaultMidiFolder = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SkyPiano", "MIDI");
-
-    // ---- 属性变更事件 ----
-
+    /// <summary> 实现 INotifyPropertyChanged 接口  </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
-
-    // ---- 播放列表集合 ----
-
-    /// <summary>
-    /// 播放列表中的所有曲目项，供 UI 的 ListBox 绑定。
-    /// </summary>
+    /// <summary>  播放列表中的所有曲目项，供 UI 的 ListBox 绑定。  </summary>
     public ObservableCollection<TrackItemViewModel> PlaylistItems { get; } = new();
 
     // ---- 构造函数 ----
@@ -255,8 +245,7 @@ public class MainViewModel : INotifyPropertyChanged, IDisposable
     /// 加载默认 MIDI 文件夹（Documents/SkyPiano/MIDI）。
     /// 文件夹不存在则自动创建并加载。
     /// </summary>
-    public void LoadDefaultFolder()
-    {
+    public void LoadDefaultFolder() {
         if (!System.IO.Directory.Exists(DefaultMidiFolder))
             System.IO.Directory.CreateDirectory(DefaultMidiFolder);
 

@@ -7,15 +7,14 @@ namespace SkyPiano.Core.Player.Imp;
 /// 按键事件调度器，基于 <see cref="Stopwatch"/> + 高频率 <see cref="Timer"/> 驱动。
 /// 将解析后的 <see cref="KeyEvent"/> 列表按时间排序，实时调度 <see cref="IPerformer"/> 的按下/释放操作。
 /// </summary>
-public class KeyScheduler : IDisposable
-{
-    /// <summary>内部排序后的原子事件（按下或释放）。</summary>
+public class KeyScheduler : IDisposable {
+    /// <summary> 内部排序后的原子事件（按下或释放）。</summary>
     private ScheduledEvent[] _events = [];
 
     /// <summary>下一个待触发的事件索引。</summary>
     private int _nextIndex;
 
-    /// <summary>高精度计时器，记录从 Play() 开始经过的时间。</summary>
+    /// <summary> 高精度计时器，记录从 Play() 开始经过的时间。</summary>
     private readonly Stopwatch _stopwatch = new();
 
     /// <summary>调度定时器，约 10ms 间隔检查待触发事件。</summary>
@@ -265,12 +264,9 @@ public class KeyScheduler : IDisposable
         ReleaseAll();
     }
 
-    /// <summary>
-    /// 内部原子调度事件：在指定时间按下或释放某个键。
-    /// </summary>
-    private readonly struct ScheduledEvent(long timeUs, char key, bool isPress)
-    {
-        /// <summary>事件触发时间（微秒）。</summary>
+    /// <summary> 内部原子调度事件：在指定时间按下或释放某个键。</summary>
+    private readonly struct ScheduledEvent(long timeUs, char key, bool isPress) {
+        /// <summary> 事件触发时间（微秒）。</summary>
         public readonly long TimeUs = timeUs;
 
         /// <summary>要操作的键盘按键。</summary>
