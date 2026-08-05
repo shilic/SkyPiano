@@ -39,19 +39,13 @@ public class KeyScheduler : IDisposable {
     /// </summary>
     public bool IsRunning { get; private set; }
 
-    /// <summary>
-    /// 当前播放位置。
-    /// </summary>
+    /// <summary> 当前播放位置。 </summary>
     public TimeSpan CurrentTime => TimeSpan.FromMicroseconds(GetElapsedMicroseconds());
 
-    /// <summary>
-    /// 曲目总时长。
-    /// </summary>
+    /// <summary> 曲目总时长。 </summary>
     public TimeSpan Duration { get; private set; }
 
-    /// <summary>
-    /// 播放进度（0.0~1.0）。
-    /// </summary>
+    /// <summary>  播放进度（0.0~1.0）。 </summary>
     public double Progress => _totalDurationUs > 0
         ? (double)GetElapsedMicroseconds() / _totalDurationUs
         : 0;
@@ -246,20 +240,14 @@ public class KeyScheduler : IDisposable {
         _pressedKeys.Clear();
     }
 
-    /// <summary>
-    /// 获取当前经过的微秒数。
-    /// </summary>
-    private long GetElapsedMicroseconds()
-    {
+    /// <summary> 获取当前经过的微秒数。 </summary>
+    private long GetElapsedMicroseconds() {
         if (!IsRunning) return _pausedElapsedUs;
         return _pausedElapsedUs + (_stopwatch.ElapsedMilliseconds * 1000);
     }
 
-    /// <summary>
-    /// 释放定时器资源并释放所有按键。
-    /// </summary>
-    public void Dispose()
-    {
+    /// <summary> 释放定时器资源并释放所有按键。  </summary>
+    public void Dispose() {
         _timer?.Dispose();
         ReleaseAll();
     }
