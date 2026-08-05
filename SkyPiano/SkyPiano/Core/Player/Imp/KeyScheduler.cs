@@ -52,6 +52,8 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
     #region  需要的依赖注入
     /// <summary> 事件完成时（所有按键已调度完毕）触发。  </summary>
     public event Action? Finished;
+    /// <summary> 播放进度更新时触发（约每 10ms，与 Tick 同频）。ViewModel 订阅此事件刷新进度条。 </summary>
+    public event Action? ProgressChanged;
     /// <summary> 当前使用的演奏者实例。(通过依赖注入解耦) </summary>
     public IPerformer Performer { get; } = performer;
     #endregion 需要的依赖注入
