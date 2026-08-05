@@ -137,6 +137,7 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
     /// <summary> 快进指定时间量。 </summary>
     /// <param name="delta">前进的时间量。</param>
     public void SeekForward(TimeSpan delta) {
+        Pause();
         // 将快进时间量转换为微秒
         long deltaUs = (long)delta.TotalMicroseconds;
         // 计算新的已播放时间，确保不超过总时长
@@ -153,11 +154,13 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
         }
         _pausedElapsedUs = newElapsed;
         _nextIndex = newIndex;
+        Play();
     }
 
     /// <summary>  快退指定时间量。  </summary>
     /// <param name="delta">后退的时间量。</param>
     public void SeekBackward(TimeSpan delta) {
+        Pause();
         // 将快退时间量转换为微秒
         long deltaUs = (long)delta.TotalMicroseconds;
         // 计算新的已播放时间，确保不小于 0
@@ -172,8 +175,8 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
         }
         _pausedElapsedUs = newElapsed;
         _nextIndex = newIndex;
-
         ReleaseAll();
+        Play();
     }
 
     /// <summary>
