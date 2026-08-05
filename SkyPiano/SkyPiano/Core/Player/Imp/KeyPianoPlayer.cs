@@ -26,6 +26,7 @@ public class KeyPianoPlayer : 替身使者, IDisposable {
 
         _playlist.TrackChanged += OnTrackChanged;
         _scheduler.Finished += OnPlaybackFinished;
+        _scheduler.ProgressChanged += (p, t) => ProgressUpdated?.Invoke(p, t);
     }
 
     // ---- 替身使者接口实现 ----
@@ -78,8 +79,10 @@ public class KeyPianoPlayer : 替身使者, IDisposable {
     public double Progress => _scheduler.Progress;
     /// <summary> 当曲目发生切换时触发。 </summary>
     public event Action? TrackChanged;
-    /// <summary> 当需要外部刷新进度时触发（由 ViewModel 定时器驱动）。 </summary>
+    /// <summary> 当播放状态变化时触发（播放/暂停/切歌等）。 </summary>
     public event Action? StateChanged;
+    /// <summary> 播放进度更新时触发。参数：progress(0~1)、currentTime。</summary>
+    public event Action<double, TimeSpan>? ProgressUpdated;
 
     // ---- 内部逻辑 ----
     /// <summary> 播放列表切换曲目时的回调：解析新曲目 → 加载调度器（不自动播放）。 </summary>
