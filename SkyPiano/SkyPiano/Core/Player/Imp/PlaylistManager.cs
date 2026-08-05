@@ -3,7 +3,7 @@ using System.IO;
 namespace SkyPiano.Core.Player.Imp;
 
 /// <summary>
-/// 播放列表管理器，负责扫描文件夹中的 MIDI 文件并管理曲目导航。
+/// 播放列表管理器，负责保存曲目和切换曲目。
 /// 支持循环播放：上一首/下一首在边界处自动环绕。
 /// </summary>
 public class PlaylistManager

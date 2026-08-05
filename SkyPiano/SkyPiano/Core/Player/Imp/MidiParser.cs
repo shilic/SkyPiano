@@ -36,12 +36,12 @@ public static class MidiParser {
         var tempoMap = midiFile.GetTempoMap();
 
         // 获取所有音符，DryWetMidi 自动处理 TempoMap 换算
-        var notes = midiFile.GetNotes();
+        ICollection<Note> notes = midiFile.GetNotes();
 
         var events = new List<KeyEvent>();
-        foreach (var note in notes) {
+        foreach (Note note in notes) {
             // 将 MIDI 音符编号映射到键盘按键，无映射则跳过
-            var key = NoteToKeyMapper.GetKeyForMidi(note.NoteNumber);
+            char? key = NoteToKeyMapper.GetKeyForMidi(note.NoteNumber);
             if (key == null) continue;
 
             // 将 DryWetMidi 的时间转换为微秒

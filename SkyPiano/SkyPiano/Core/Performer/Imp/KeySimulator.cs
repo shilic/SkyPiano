@@ -7,8 +7,7 @@ namespace SkyPiano.Core.Performer.Imp;
 /// 基于 Win32 <c>keybd_event</c> API 的键盘模拟器。
 /// 按下和释放键盘按键，适用于将 MIDI 音符转换为游戏内的键盘输入。
 /// </summary>
-public class KeySimulator : IPerformer
-{
+public class KeySimulator : IPerformer {
     /// <summary>keybd_event 的"抬起"标志位。</summary>
     private const uint KEYEVENTF_KEYUP = 0x0002;
 
@@ -48,8 +47,7 @@ public class KeySimulator : IPerformer
     /// 按下指定的键盘按键（通过 Win32 keybd_event 发送按下事件）。
     /// </summary>
     /// <param name="key">键盘字符（如 'A'），不区分大小写。</param>
-    public void KeyPress(char key)
-    {
+    public void KeyPress(char key) {
         var vk = GetVirtualKey(key);
         keybd_event(vk, 0, 0, UIntPtr.Zero);
     }
@@ -58,8 +56,7 @@ public class KeySimulator : IPerformer
     /// 释放指定的键盘按键（通过 Win32 keybd_event 发送抬起事件）。
     /// </summary>
     /// <param name="key">键盘字符（如 'A'），不区分大小写。</param>
-    public void KeyRelease(char key)
-    {
+    public void KeyRelease(char key) {
         var vk = GetVirtualKey(key);
         keybd_event(vk, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
     }

@@ -5,9 +5,9 @@ using SkyPiano.Core.Player.Base;
 namespace SkyPiano.Core.Player.Imp;
 
 /// <summary>
-/// 键盘钢琴播放器，实现 <see cref="替身使者"/> 接口。
-/// 通过 <see cref="KeyScheduler"/> 将 MIDI 音符实时转换为键盘按键事件，
-/// 驱动游戏中的虚拟乐器发声。内部组合了解析器、调度器和演奏器。
+/// 键盘钢琴播放器，实现 <see cref="替身使者"/> 接口。<br></br>
+/// 通过 调度器 <see cref="KeyScheduler"/> 实现单曲播放 <br></br>
+/// 通过 播放列表管理器 <see cref="PlaylistManager"/> 实现曲目管理 <br></br>
 /// </summary>
 public class KeyPianoPlayer : 替身使者, IDisposable {
     /// <summary> 按键事件调度器，用定时器驱动按键时间线。(实际的播放器) </summary>

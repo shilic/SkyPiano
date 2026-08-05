@@ -4,8 +4,8 @@ using SkyPiano.Core.Performer.Base;
 namespace SkyPiano.Core.Player.Imp;
 
 /// <summary>
-/// 按键事件调度器，基于 <see cref="Stopwatch"/> + 高频率 <see cref="Timer"/> 驱动。
-/// 将解析后的 <see cref="KeyEvent"/> 列表按时间排序，实时调度 <see cref="IPerformer"/> 的按下/释放操作。
+/// 按键事件调度器，基于 <see cref="Stopwatch"/> + 高频率 <see cref="Timer"/> 驱动。<br></br>
+/// 将解析后的 <see cref="KeyEvent"/> 列表按时间排序，实时调度 <see cref="IPerformer"/> 的按下/释放操作。<br></br>
 /// </summary>
 public class KeyScheduler : IDisposable {
     /// <summary> 内部排序后的原子事件（按下或释放）。</summary>
@@ -17,10 +17,10 @@ public class KeyScheduler : IDisposable {
     /// <summary> 高精度计时器，记录从 Play() 开始经过的时间。</summary>
     private readonly Stopwatch _stopwatch = new();
 
-    /// <summary>调度定时器，约 10ms 间隔检查待触发事件。</summary>
+    /// <summary> 调度定时器，约 10ms 间隔检查待触发事件。</summary>
     private System.Threading.Timer? _timer;
 
-    /// <summary>当前按下的键集合，用于避免重复按下/释放。</summary>
+    /// <summary> 当前按下的键集合，用于避免重复按下/释放。</summary>
     private readonly HashSet<char> _pressedKeys = new();
 
     /// <summary>当前加载曲目的总时长（微秒）。</summary>
@@ -54,8 +54,7 @@ public class KeyScheduler : IDisposable {
     /// 构造 KeyScheduler。
     /// </summary>
     /// <param name="performer">按键执行器（如 <see cref="SkyPiano.Core.Performer.Imp.KeySimulator"/>）。</param>
-    public KeyScheduler(IPerformer performer)
-    {
+    public KeyScheduler(IPerformer performer) {
         Performer = performer;
     }
 
