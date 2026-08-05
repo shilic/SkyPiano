@@ -144,9 +144,10 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
 
         // 从当前位置往后扫描，找到第一个未到期的事件
         int newIndex = _nextIndex;
-        // 快进时，当前已经消逝的时间一定大于当前索引事件的时间，故让当前事件的时间 > 消逝的时间 就退出循环是合理的
-        // 索引值不断增加，直到找到第一个事件的时间大于新的已播放时间；
-        // 退出循环，此时Trik仍然再运行
+        /* 快进时，当前已经消逝的时间一定大于当前索引事件的时间，故让当前事件的时间 > 消逝的时间 就退出循环是合理的；
+         * 退出循环时，还不会立马执行下一个音符的演奏，还需要等到时间满足条件。
+         * 索引值不断增加，直到找到第一个事件的时间大于新的已播放时间；
+         * 退出循环，此时Trik仍然再运行 */
         while (newIndex < _events.Length && _events[newIndex].TimeUs <= newElapsed) {
             newIndex++;
         }
@@ -164,6 +165,8 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
 
         // 从当前位置往前扫描，退回已过期的事件
         int newIndex = _nextIndex;
+        /* 快退时，当前已经消逝的时间一定小于当前索引事件的时间，故让当前事件的时间 < 消逝的时间 就退出循环是合理的；
+         */
         while (newIndex > 0 && _events[newIndex - 1].TimeUs > newElapsed) {
             newIndex--;
         }
