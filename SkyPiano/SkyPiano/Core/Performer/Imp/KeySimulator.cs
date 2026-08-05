@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using SkyPiano.Core.MusicTheory;
 using SkyPiano.Core.Performer.Base;
 
 namespace SkyPiano.Core.Performer.Imp;
@@ -22,42 +23,18 @@ public class KeySimulator : IPerformer {
     private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
 
     /// <summary>
-    /// Win32 VkKeyScan：将字符映射为虚拟键码。
-    /// </summary>
-    /// <param name="ch">要转换的字符。</param>
-    /// <returns>低字节为虚拟键码，高字节为 Shift 状态。</returns>
-    [DllImport("user32.dll")]
-    private static extern short VkKeyScan(char ch);
-
-    /// <summary>
-    /// 将字符转换为虚拟键码。
-    /// </summary>
-    /// <param name="key">键盘字符（如 'A'）。</param>
-    /// <returns>Windows 虚拟键码。</returns>
-    /// <exception cref="ArgumentException">无法识别的字符时抛出此异常。</exception>
-    private static byte GetVirtualKey(char key)
-    {
-        var result = VkKeyScan(char.ToUpperInvariant(key));
-        if (result == -1)
-            throw new ArgumentException($"无法将字符 '{key}' 转换为虚拟键码。");
-        return (byte)(result & 0xFF);
-    }
-
-    /// <summary>
     /// 按下指定的键盘按键（通过 Win32 keybd_event 发送按下事件）。
     /// </summary>
-    /// <param name="key">键盘字符（如 'A'），不区分大小写。</param>
-    public void KeyPress(char key) {
-        var vk = GetVirtualKey(key);
-        keybd_event(vk, 0, 0, UIntPtr.Zero);
+    /// <param name="note">21 键音符枚举值。</param>
+    public void KeyPress(MyNote note) {
+        keybd_event(note.ToVirtualKey(), 0, 0, UIntPtr.Zero);
     }
 
     /// <summary>
     /// 释放指定的键盘按键（通过 Win32 keybd_event 发送抬起事件）。
     /// </summary>
-    /// <param name="key">键盘字符（如 'A'），不区分大小写。</param>
-    public void KeyRelease(char key) {
-        var vk = GetVirtualKey(key);
-        keybd_event(vk, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+    /// <param name="note">21 键音符枚举值。</param>
+    public void KeyRelease(MyNote note) {
+        keybd_event(note.ToVirtualKey(), 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
     }
 }

@@ -1,3 +1,4 @@
+using SkyPiano.Core.MusicTheory;
 using SkyPiano.Core.Performer.Base;
 using SkyPiano.Core.Performer.Imp;
 using SkyPiano.Core.Player.Base;
@@ -89,9 +90,8 @@ public class KeyPianoPlayer : 替身使者, IDisposable {
         // 停止当前播放
         _scheduler.Stop();
 
-        // 解析 MIDI 文件 → 按键事件列表，加载到调度器
-        var (events, duration) = MidiParser.Parse(path);
-        _scheduler.Load(events, duration);
+        // 从 MIDI 文件构建乐谱 → 加载到调度器
+        _scheduler.Load(path.FromMidiFile());
 
         TrackChanged?.Invoke();
         StateChanged?.Invoke();
