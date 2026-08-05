@@ -137,27 +137,37 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
     /// <summary> 快进指定时间量。 </summary>
     /// <param name="delta">前进的时间量。</param>
     public void SeekForward(TimeSpan delta) {
+        // 将快进时间量转换为微秒
         long deltaUs = (long)delta.TotalMicroseconds;
-        _pausedElapsedUs = Math.Min(_pausedElapsedUs + deltaUs, _totalDurationUs);
+        // 计算新的已播放时间，确保不超过总时长
+        long newElapsed = Math.Min(_pausedElapsedUs + deltaUs, _totalDurationUs);
 
-        // 从当前 _nextIndex 往后跳，跳过已经"经过"的事件
-        while (_nextIndex < _events.Length && _events[_nextIndex].TimeUs <= _pausedElapsedUs){
-            _nextIndex++;
+        // 从当前位置往后扫描，找到第一个未到期的事件
+        int newIndex = _nextIndex;
+        // 索引值不断增加，直到找到第一个事件的时间大于新的已播放时间；
+        // 退出循环，此时Trik仍然再运行
+        while (newIndex < _events.Length && _events[newIndex].TimeUs <= newElapsed) {
+            newIndex++;
         }
+        _pausedElapsedUs = newElapsed;
+        _nextIndex = newIndex;
     }
 
-    /// <summary>
-    /// 快退指定时间量。
-    /// </summary>
+    /// <summary>  快退指定时间量。  </summary>
     /// <param name="delta">后退的时间量。</param>
     public void SeekBackward(TimeSpan delta) {
+        // 将快退时间量转换为微秒
         long deltaUs = (long)delta.TotalMicroseconds;
-        _pausedElapsedUs = Math.Max(0, _pausedElapsedUs - deltaUs);
+        // 计算新的已播放时间，确保不小于 0
+        long newElapsed = Math.Max(0, _pausedElapsedUs - deltaUs);
 
-        // 从当前 _nextIndex 往回退，找到新时间点之后第一个未触发的事件
-        while (_nextIndex > 0 && _events[_nextIndex - 1].TimeUs > _pausedElapsedUs){
-            _nextIndex--;
+        // 从当前位置往前扫描，退回已过期的事件
+        int newIndex = _nextIndex;
+        while (newIndex > 0 && _events[newIndex - 1].TimeUs > newElapsed) {
+            newIndex--;
         }
+        _pausedElapsedUs = newElapsed;
+        _nextIndex = newIndex;
 
         ReleaseAll();
     }
