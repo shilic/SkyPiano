@@ -136,8 +136,7 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
 
     /// <summary> 快进指定时间量。 </summary>
     /// <param name="delta">前进的时间量。</param>
-    public void SeekForward(TimeSpan delta)
-    {
+    public void SeekForward(TimeSpan delta) {
         long deltaUs = (long)delta.TotalMicroseconds;
         _pausedElapsedUs = Math.Min(_pausedElapsedUs + deltaUs, _totalDurationUs);
 
@@ -151,8 +150,7 @@ public class KeyScheduler(IPerformer performer) : IDisposable {
     /// 快退指定时间量。
     /// </summary>
     /// <param name="delta">后退的时间量。</param>
-    public void SeekBackward(TimeSpan delta)
-    {
+    public void SeekBackward(TimeSpan delta) {
         long deltaUs = (long)delta.TotalMicroseconds;
         _pausedElapsedUs = Math.Max(0, _pausedElapsedUs - deltaUs);
 
