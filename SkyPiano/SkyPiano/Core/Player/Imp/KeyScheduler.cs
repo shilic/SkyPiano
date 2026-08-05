@@ -4,64 +4,57 @@ using SkyPiano.Core.Performer.Base;
 namespace SkyPiano.Core.Player.Imp;
 
 /// <summary>
-/// 按键事件调度器，基于 <see cref="Stopwatch"/> + 高频率 <see cref="Timer"/> 驱动。<br></br>
+/// 按键事件调度器，用于实现播放器接口的组件之一。 <br></br>
+/// 基于 <see cref="Stopwatch"/> + 高频率 <see cref="Timer"/> 驱动。<br></br>
 /// 将解析后的 <see cref="KeyEvent"/> 列表按时间排序，实时调度 <see cref="IPerformer"/> 的按下/释放操作。<br></br>
 /// </summary>
-public class KeyScheduler : IDisposable {
-    /// <summary> 内部排序后的原子事件（按下或释放）。</summary>
+/// <remarks> 构造 调度器。<br></br>
+/// 注入演奏者依赖（如 <see cref="Performer.Imp.KeySimulator"/>），用于执行按键操作。<br></br>
+/// </remarks>
+/// <param name="performer">按键执行器（如 <see cref="Performer.Imp.KeySimulator"/>）。</param>
+public class KeyScheduler(IPerformer performer) : IDisposable {
+    #region  内部私有字段
+    /// <summary> 内部排序后的播放原子事件（拆分为按下或释放）。和演奏者接口对应(按下或释放)。 </summary>
     private ScheduledEvent[] _events = [];
-
-    /// <summary>下一个待触发的事件索引。</summary>
+    /// <summary> 下一个待触发的事件索引。</summary>
     private int _nextIndex;
-
-    /// <summary> 高精度计时器，记录从 Play() 开始经过的时间。</summary>
+    /// <summary> 高精度计时器，记录从 Play() 开始经过的时间。<br></br>
+    /// 每次暂停都会重新归零(临时工)<br></br>
+    /// 相当于一次播放(恢复)到暂停之间的时间<br></br>
+    /// </summary>
     private readonly Stopwatch _stopwatch = new();
-
+    /* 为什么不用 异步 Task + sleep 的方式来调度任务，在 Task 里边开死循环 + 标志位来控制确实简单；
+     * 但是，标志位无法 暂停 sleep()，涉及 CancellationToken 等很麻烦，
+     * 如果打断 sleep(), 中途恢复的时候得从sleep()的剩余时间继续睡眠，容易出错。
+     * 而且 sleep() 的精度不够，容易出现按键延迟或错过触发时间。
+     */
     /// <summary> 调度定时器，约 10ms 间隔检查待触发事件。</summary>
-    private System.Threading.Timer? _timer;
-
+    private Timer? _timer;
     /// <summary> 当前按下的键集合，用于避免重复按下/释放。</summary>
-    private readonly HashSet<char> _pressedKeys = new();
-
+    private readonly HashSet<char> _pressedKeys = [];
     /// <summary>当前加载曲目的总时长（微秒）。</summary>
     private long _totalDurationUs;
-
-    /// <summary>暂停时的已播放时间（微秒），用于恢复播放。</summary>
+    /// <summary> 持久记忆暂停时的已播放时间（微秒），用于恢复播放。</summary>
     private long _pausedElapsedUs;
-
-    /// <summary>
-    /// 事件完成时（所有按键已调度完毕）触发。
-    /// </summary>
-    public event Action? Finished;
-
-    /// <summary>
-    /// 是否正在运行（播放中且未暂停）。
-    /// </summary>
+    #endregion 内部私有字段
+    #region  外部只读的状态
+    /// <summary>  是否正在运行（播放中且未暂停）。 </summary>
     public bool IsRunning { get; private set; }
-
-    /// <summary> 当前播放位置。 </summary>
+    /// <summary> 是否处于暂停状态。 </summary>
+    public bool IsPaused => !IsRunning;
+    /// <summary> 当前播放位置。<br></br> 内部将微秒转换为时间跨度TimeSpan。 </summary>
     public TimeSpan CurrentTime => TimeSpan.FromMicroseconds(GetElapsedMicroseconds());
-
     /// <summary> 曲目总时长。 </summary>
     public TimeSpan Duration { get; private set; }
-
-    /// <summary>  播放进度（0.0~1.0）。 </summary>
-    public double Progress => _totalDurationUs > 0
-        ? (double)GetElapsedMicroseconds() / _totalDurationUs
-        : 0;
-
-    /// <summary>
-    /// 构造 KeyScheduler。
-    /// </summary>
-    /// <param name="performer">按键执行器（如 <see cref="SkyPiano.Core.Performer.Imp.KeySimulator"/>）。</param>
-    public KeyScheduler(IPerformer performer) {
-        Performer = performer;
-    }
-
-    /// <summary>
-    /// 当前使用的演奏者实例。
-    /// </summary>
-    public IPerformer Performer { get; }
+    /// <summary> 播放进度百分比（0.0~1.0）。 </summary>
+    public double Progress => (_totalDurationUs > 0) ? ((double)GetElapsedMicroseconds() / _totalDurationUs) : 0;
+    #endregion 外部只读的状态
+    #region  需要的依赖注入
+    /// <summary> 事件完成时（所有按键已调度完毕）触发。  </summary>
+    public event Action? Finished;
+    /// <summary> 当前使用的演奏者实例。(通过依赖注入解耦) </summary>
+    public IPerformer Performer { get; } = performer;
+    #endregion 需要的依赖注入
 
     /// <summary>
     /// 加载按键事件列表，将其展平为按下/释放原子事件并排序。
@@ -69,25 +62,24 @@ public class KeyScheduler : IDisposable {
     /// </summary>
     /// <param name="keyEvents">从 <see cref="MidiParser"/> 解析出的按键事件列表。</param>
     /// <param name="duration">曲目总时长。</param>
-    public void Load(List<KeyEvent> keyEvents, TimeSpan duration)
-    {
+    public void Load(List<KeyEvent> keyEvents, TimeSpan duration) {
         Duration = duration;
         _totalDurationUs = (long)duration.TotalMicroseconds;
 
         // 将每个 KeyEvent 拆分为按下(正时间)和释放(负标记)两个原子事件
-        var list = new List<ScheduledEvent>(keyEvents.Count * 2);
-        foreach (var evt in keyEvents)
-        {
+        List<ScheduledEvent> list = new(keyEvents.Count * 2);
+        foreach (KeyEvent evt in keyEvents) {
             list.Add(new ScheduledEvent(evt.StartMicroseconds, evt.Key, true));
             list.Add(new ScheduledEvent(evt.EndMicroseconds, evt.Key, false));
         }
 
         // 按时间升序排列，同时间按下优先于释放
-        list.Sort((a, b) =>
-        {
-            var cmp = a.TimeUs.CompareTo(b.TimeUs);
+        list.Sort((a, b) => {
+            // 时间小的排前面
+            int cmp = a.TimeUs.CompareTo(b.TimeUs);
+            // 如果时间不同，直接返回结果
             if (cmp != 0) return cmp;
-            // 释放(true=1)排在按下(false=0)之后
+            // 如果时间相同（同时发生），按下排在松开前面
             return a.IsPress.CompareTo(b.IsPress);
         });
 
@@ -96,73 +88,62 @@ public class KeyScheduler : IDisposable {
         _pressedKeys.Clear();
     }
 
-    /// <summary>
-    /// 开始或恢复播放。
-    /// </summary>
-    public void Play()
-    {
+    /// <summary> 开始或恢复播放。</summary>
+    public void Play() {
+        // 如果没有事件，直接返回
         if (_events.Length == 0) return;
-
-        // 暂停后恢复：加上已播放的偏移量
-        var resumeOffset = _pausedElapsedUs;
-
+        // 恢复暂停时的已播放时间，作为当前时间的偏移量
+        long resumeOffset = _pausedElapsedUs;
+        // 重置计时器，会将 _stopwatch 的计时归零并重新开始计时
         _stopwatch.Restart();
+        // 释放旧的定时器，避免重复触发
         _timer?.Dispose();
-
         // 使用 System.Threading.Timer，约 10ms 间隔轮询事件
-        _timer = new System.Threading.Timer(_ => Tick(resumeOffset),
-            null, 0, 10);
-
+        _timer = new Timer(_ => Tick(resumeOffset), null, 0, 10);
+        // 标记为正在运行
         IsRunning = true;
     }
-
-    /// <summary>
-    /// 暂停播放，保持当前位置。
-    /// </summary>
-    public void Pause()
-    {
+    /// <summary> 暂停播放，保持当前位置。 </summary>
+    public void Pause() {
+        // 释放定时器，避免继续触发事件
         _timer?.Dispose();
+        // 将定时器引用置空
         _timer = null;
+        // 停表：停止计时器 (关键代码)
         _stopwatch.Stop();
-        _pausedElapsedUs += _stopwatch.ElapsedMilliseconds * 1000; // ms → us 近似
+        // 使用 += 累加记录已播放时间；ms → us 近似
+        _pausedElapsedUs += _stopwatch.ElapsedMilliseconds * 1000;
+        // 标记为暂停状态
         IsRunning = false;
-
-        // 释放所有当前按下的键
+        // 暂停时，需要释放所有当前按下的键
         ReleaseAll();
     }
-
-    /// <summary>
-    /// 完全停止播放，重置到开头并释放所有按键。
-    /// </summary>
-    public void Stop()
-    {
+    /// <summary> 完全停止播放，重置到开头并释放所有按键。  </summary>
+    public void Stop() {
+        // 释放定时器，避免继续触发事件
         _timer?.Dispose();
         _timer = null;
+        // 停止 + 归零
         _stopwatch.Reset();
+        // 重置已播放时间
         _nextIndex = 0;
         _pausedElapsedUs = 0;
+        // 标记为停止状态
         IsRunning = false;
-
+        // 停止时，需要释放所有当前按下的键
         ReleaseAll();
     }
 
-    /// <summary>
-    /// 快进指定时间量。
-    /// </summary>
+    /// <summary> 快进指定时间量。 </summary>
     /// <param name="delta">前进的时间量。</param>
     public void SeekForward(TimeSpan delta)
     {
-        var deltaUs = (long)delta.TotalMicroseconds;
+        long deltaUs = (long)delta.TotalMicroseconds;
         _pausedElapsedUs = Math.Min(_pausedElapsedUs + deltaUs, _totalDurationUs);
 
-        // 更新 _nextIndex 到新时间点
-        _nextIndex = 0;
-        for (var i = 0; i < _events.Length; i++)
-        {
-            if (_events[i].TimeUs <= _pausedElapsedUs)
-                _nextIndex = i + 1;
-            else
-                break;
+        // 从当前 _nextIndex 往后跳，跳过已经"经过"的事件
+        while (_nextIndex < _events.Length && _events[_nextIndex].TimeUs <= _pausedElapsedUs){
+            _nextIndex++;
         }
     }
 
@@ -172,43 +153,36 @@ public class KeyScheduler : IDisposable {
     /// <param name="delta">后退的时间量。</param>
     public void SeekBackward(TimeSpan delta)
     {
-        var deltaUs = (long)delta.TotalMicroseconds;
+        long deltaUs = (long)delta.TotalMicroseconds;
         _pausedElapsedUs = Math.Max(0, _pausedElapsedUs - deltaUs);
 
-        _nextIndex = 0;
-        for (var i = 0; i < _events.Length; i++)
-        {
-            if (_events[i].TimeUs <= _pausedElapsedUs)
-                _nextIndex = i + 1;
-            else
-                break;
+        // 从当前 _nextIndex 往回退，找到新时间点之后第一个未触发的事件
+        while (_nextIndex > 0 && _events[_nextIndex - 1].TimeUs > _pausedElapsedUs){
+            _nextIndex--;
         }
+
+        ReleaseAll();
     }
 
     /// <summary>
     /// 定时器回调：将经过时间与事件列表对比，触发所有到期的事件。
     /// </summary>
     /// <param name="resumeOffsetUs">暂停后恢复时的已播放偏移量（微秒），首次播放为 0。</param>
-    private void Tick(long resumeOffsetUs)
-    {
+    private void Tick(long resumeOffsetUs) {
         // 当前总经过时间 = 已偏移量 + Stopwatch 增量
-        var elapsedUs = resumeOffsetUs + (_stopwatch.ElapsedMilliseconds * 1000);
+        long elapsedUs = resumeOffsetUs + (_stopwatch.ElapsedMilliseconds * 1000);
 
-        // 触发所有时间 ≤ 当前经过时间的待处理事件
-        while (_nextIndex < _events.Length && _events[_nextIndex].TimeUs <= elapsedUs)
-        {
-            var evt = _events[_nextIndex];
-            if (evt.IsPress)
-            {
+        // 不是时间刚好等于按下时间点的时候执行，而是当前时间超过按下时间点一些的时候就执行。
+        while (_nextIndex < _events.Length && _events[_nextIndex].TimeUs <= elapsedUs) {
+            ScheduledEvent evt = _events[_nextIndex];
+            if (evt.IsPress) {
                 // 避免重复按下同一键
-                if (!_pressedKeys.Contains(evt.Key))
-                {
+                if (!_pressedKeys.Contains(evt.Key)) {
                     Performer.KeyPress(evt.Key);
                     _pressedKeys.Add(evt.Key);
                 }
             }
-            else
-            {
+            else {
                 Performer.KeyRelease(evt.Key);
                 _pressedKeys.Remove(evt.Key);
             }
@@ -227,13 +201,12 @@ public class KeyScheduler : IDisposable {
         }
     }
 
-    /// <summary>
-    /// 释放当前所有被按下的键。
+    /// <summary> 释放当前所有被按下的键。<br></br>
+    /// 用于暂停，停止或播放完毕时，确保没有按键残留按下状态。<br></br>
     /// </summary>
-    private void ReleaseAll()
-    {
-        foreach (var key in _pressedKeys.ToList())
-        {
+    private void ReleaseAll() {
+        // 遍历当前按下的键集合，逐个释放
+        foreach (var key in _pressedKeys.ToList()) {
             Performer.KeyRelease(key);
         }
         _pressedKeys.Clear();
@@ -241,7 +214,9 @@ public class KeyScheduler : IDisposable {
 
     /// <summary> 获取当前经过的微秒数。 </summary>
     private long GetElapsedMicroseconds() {
+        // 如果处于暂停状态，直接返回当前消逝的时间。
         if (!IsRunning) return _pausedElapsedUs;
+        // 如果正在运行，返回已暂停时间 + 当前计时器的增量。
         return _pausedElapsedUs + (_stopwatch.ElapsedMilliseconds * 1000);
     }
 
