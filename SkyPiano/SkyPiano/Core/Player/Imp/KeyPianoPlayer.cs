@@ -14,6 +14,7 @@ namespace SkyPiano.Core.Player.Imp;
 /// <remarks> 构造 KeyPianoPlayer。</remarks>
 /// <param name="performer">按键执行器，默认 Win32 keybd_event。</param>
 public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDisposable {
+    #region 私有字段
     #region 调度器字段
     /// <summary> 当前加载的乐谱。</summary>
     private MyScore? _score;
@@ -39,6 +40,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
     /// <summary>当前曲目索引，-1 为空。</summary>
     private int _trackIndex = -1;
     #endregion 播放列表字段
+    #endregion 私有字段
     #region 事件
     /// <summary> 曲目切换时触发。参数为新的文件路径（null 表示列表为空）。</summary>
     public event Action<string?>? TrackChanged; 

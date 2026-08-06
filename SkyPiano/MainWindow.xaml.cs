@@ -16,20 +16,11 @@ public partial class MainWindow : Window {
 
         _vm = new MainViewModel();
         DataContext = _vm;
-
-        // 窗口加载完成时自动加载默认 MIDI 文件夹
         Loaded += OnLoaded;
-
         // 窗口关闭时释放资源
         Closing += (_, _) => _vm.Dispose();
-        //Binding binding = new Binding() { 
-        //    Source = ""
-        //};
-        //BindingOperations.SetBinding
-
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e) {
-        _vm.LoadDefaultFolder();
     }
 }
