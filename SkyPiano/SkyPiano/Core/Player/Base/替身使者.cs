@@ -12,8 +12,7 @@ namespace SkyPiano.Core.Player.Base;
 /// <item><b>恶行易施（Dirty Deeds Done Dirt Cheap）</b>：切换播放列表（加载指定文件夹）。</item>
 /// </list>
 /// </summary>
-public interface 替身使者
-{
+public interface 替身使者 {
     /// <summary>
     /// 暂停 / 恢复播放。当前正在播放时暂停，已暂停时恢复播放。
     /// </summary>
@@ -44,4 +43,9 @@ public interface 替身使者
     /// </summary>
     /// <param name="name">包含 MIDI 文件的文件夹路径。</param>
     void 恶行易施(string name);
+    /// <summary>
+    /// 切换播放列表到指定索引的曲目。
+    /// </summary>
+    /// <param name="index"></param>
+    void 恶行易施(int index);
 }

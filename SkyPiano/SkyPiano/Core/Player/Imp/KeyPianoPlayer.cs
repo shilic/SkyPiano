@@ -8,12 +8,12 @@ using SkyPiano.Core.Player.Base;
 namespace SkyPiano.Core.Player.Imp;
 
 /// <summary>
-/// 键盘钢琴播放器，实现 <see cref="替身使者"/> 接口。<br/>
+/// 键盘钢琴播放器，实现 <see cref="IPianoPlayer"/> 接口。<br/>
 /// 内部集成播放调度器和播放列表管理，作为 ViewModel 唯一的 Model 层依赖。
 /// </summary>
 /// <remarks> 构造 KeyPianoPlayer。</remarks>
 /// <param name="performer">按键执行器，默认 Win32 keybd_event。</param>
-public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDisposable {
+public class KeyPianoPlayer(IPerformer? performer = null) : IPianoPlayer {
     #region 私有字段
     #region 调度器字段
     /// <summary> 当前加载的乐谱。</summary>
@@ -82,7 +82,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
     }
     /// <summary> 切换到上一个。</summary>
     public void 男人领域() { 
-        SelectTrack((_trackIndex - 1 + _tracks.Length) % _tracks.Length);
+        恶行易施((_trackIndex - 1 + _tracks.Length) % _tracks.Length);
     }
     /// <summary> 快退 5 秒。</summary>
     public void 败者食尘() { 
@@ -94,20 +94,20 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
     }
     /// <summary> 切换到下一个。</summary>
     public void 墓志铭() { 
-        SelectTrack((_trackIndex + 1) % _tracks.Length);
+        恶行易施((_trackIndex + 1) % _tracks.Length);
     }
     /// <summary> 切换播放列表文件夹。</summary>
     public void 恶行易施(string name) {
         _trackIndex = -1;
         _tracks = Directory.GetFiles(name, "*.mid", SearchOption.TopDirectoryOnly).OrderBy(f => f).ToArray();
         if (_tracks.Length > 0) {
-            SelectTrack(0);
+            恶行易施(0);
         }
         StateChanged?.Invoke();
     }
     #endregion 替身使者接口
     /// <summary> 选中指定索引的曲目。</summary>
-    public void SelectTrack(int index) {
+    public void 恶行易施(int index) {
         // 校验
         if (index < 0 || index >= _tracks.Length) return;
         if (index == _trackIndex) return;

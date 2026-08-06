@@ -46,12 +46,13 @@ public partial class MainViewModel : ObservableObject, IDisposable {
     #endregion 被观察的属性（UI 绑定）
     #region 被观察的状态
     /// <summary>
-    /// 当用户通过 ListBox 选中曲目时由源生成器回调。
-    /// 索引有效且不同于当前索引时切换到对应曲目。
+    /// 双向绑定<br></br>
+    /// 当用户通过 ListBox 选中曲目时由源生成器回调。<br></br>
+    /// 索引有效且不同于当前索引时切换到对应曲目。<br></br>
     /// </summary>
     partial void OnSelectedTrackIndexChanged(int value) {
-        if (value >= 0 && value < _player.TrackCount && value != _player.CurrentTrackIndex)
-            _player.SelectTrack(value);
+        //if (value >= 0 && value < _player.TrackCount && value != _player.CurrentTrackIndex)
+        _player.恶行易施(value);
     }
     #endregion 被观察的状态
     #region 构造 MainViewModel
