@@ -1,23 +1,25 @@
 using System.Diagnostics;
 using SkyPiano.Core.MusicTheory;
 using SkyPiano.Core.Performer.Base;
+using SkyPiano.SkyPiano.Core.MusicTheory;
 
 namespace SkyPiano.Core.Player.Imp;
 
 /// <summary>
 /// 按键事件调度器，用于实现播放器接口的组件之一。 <br></br>
 /// 基于 <see cref="Stopwatch"/> + 高频率 <see cref="Timer"/> 驱动。<br></br>
-/// 读取 <see cref="Score"/> 乐谱对象，按序号推进，实时调度 <see cref="IPerformer"/> 的按下/释放操作。<br></br>
+/// 读取 <see cref="MyScore"/> 乐谱对象，按序号推进，实时调度 <see cref="IPerformer"/> 的按下/释放操作。<br></br>
 /// </summary>
 /// <remarks> 构造 调度器。<br></br>
 /// 注入演奏者依赖（如 <see cref="Performer.Imp.KeySimulator"/>），用于执行按键操作。<br></br>
 /// </remarks>
 /// <param name="performer">按键执行器（如 <see cref="Performer.Imp.KeySimulator"/>）。</param>
+[Obsolete("已合并到 KeyPianoPlayer 中。")]
 public class KeyScheduler(IPerformer performer) : IDisposable
 {
     #region  内部私有字段
     /// <summary>当前加载的乐谱。</summary>
-    private Score? _score;
+    private MyScore? _score;
     /// <summary>当前播放序号。</summary>
     private int _index;
     /// <summary> 高精度计时器，记录从 Play() 开始经过的时间。<br></br>
@@ -68,7 +70,7 @@ public class KeyScheduler(IPerformer performer) : IDisposable
     /// <summary>
     /// 加载乐谱。加载后不会自动播放，需调用 <see cref="Play"/>。
     /// </summary>
-    public void Load(Score score)
+    public void Load(MyScore score)
     {
         _score = score;
         _pressedKeys.Clear();

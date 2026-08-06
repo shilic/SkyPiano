@@ -1,22 +1,30 @@
-using System.IO;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
+using SkyPiano.Core.MusicTheory;
+using System.IO;
+using MyNoteEvent = SkyPiano.Core.MusicTheory.MyNoteEvent;
 
-namespace SkyPiano.Core.MusicTheory;
+namespace SkyPiano.SkyPiano.Core.MusicTheory;
 
 /// <summary>
-/// 乐谱构建器：从 MIDI 文件解析并生成 <see cref="Score"/>。
+/// 乐谱：全曲原子事件的纯数据容器。<br/>
+/// 字典键为序号（0..N-1），值为 <see cref="MyNoteEvent"/>。<br/>
+/// 序号可直接用于暂停/恢复时记录播放进度。
 /// </summary>
+/// <param name="Name">乐谱名称。</param>
+/// <param name="Events">序号 → 原子事件的字典。</param>
+/// <param name="Duration">全曲总时长。</param>
+public record MyScore(string Name, IReadOnlyDictionary<int, MyNoteEvent> Events, TimeSpan Duration);
+
+/// <summary> 乐谱构建器：从 MIDI 文件解析并生成 <see cref="MyScore"/>。  </summary>
 public static class ScoreParser {
-    /// <summary>
-    /// 从 MIDI 文件构建乐谱。内部将每个音符拆为按下+释放两个原子事件，按时间排序。
-    /// </summary>
-    public static Score FromMidiFile(this string filePath) {
+    /// <summary> 从 MIDI 文件构建乐谱。内部将每个音符拆为按下+释放两个原子事件，按时间排序。 </summary>
+    public static MyScore FromMidiFile(this string filePath) {
         var midiFile = MidiFile.Read(filePath);
         var tempoMap = midiFile.GetTempoMap();
         ICollection<Note> notes = midiFile.GetNotes();
 
-        List<NoteEvent> list = new(notes.Count * 2);
+        List<MyNoteEvent> list = new(notes.Count * 2);
         foreach (Note note in notes) {
             var myNote = ((int)note.NoteNumber).ToMyNote();
             if (myNote == null) continue;
@@ -24,8 +32,8 @@ public static class ScoreParser {
             var startUs = note.TimeAs<MetricTimeSpan>(tempoMap).TotalMicroseconds;
             var lengthUs = note.LengthAs<MetricTimeSpan>(tempoMap).TotalMicroseconds;
             // 将每个 KeyEvent 拆分为按下(正时间)和释放(负标记)两个原子事件
-            list.Add(new NoteEvent(startUs, myNote.Value, true, lengthUs));
-            list.Add(new NoteEvent(startUs + lengthUs, myNote.Value, false));
+            list.Add(new MyNoteEvent(startUs, myNote.Value, true, lengthUs));
+            list.Add(new MyNoteEvent(startUs + lengthUs, myNote.Value, false));
         }
         // 按时间升序排列，同时间按下优先于释放
         list.Sort((a, b) => {
@@ -39,6 +47,6 @@ public static class ScoreParser {
 
         var duration = midiFile.GetDuration<MetricTimeSpan>();
         var name = Path.GetFileNameWithoutExtension(filePath);
-        return new Score(name, events, TimeSpan.FromMicroseconds(duration.TotalMicroseconds));
+        return new MyScore(name, events, TimeSpan.FromMicroseconds(duration.TotalMicroseconds));
     }
 }

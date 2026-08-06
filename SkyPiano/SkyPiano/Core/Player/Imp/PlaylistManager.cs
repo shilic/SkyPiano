@@ -6,6 +6,7 @@ namespace SkyPiano.Core.Player.Imp;
 /// 播放列表管理器，负责保存曲目和切换曲目。
 /// 支持循环播放：上一首/下一首在边界处自动环绕。
 /// </summary>
+[Obsolete("已合并到 KeyPianoPlayer 中。")]
 public class PlaylistManager
 {
     /// <summary>内部维护的 MIDI 文件路径数组。</summary>
