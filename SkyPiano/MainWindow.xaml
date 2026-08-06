@@ -8,11 +8,16 @@
         d:DataContext="{d:DesignInstance vm:MainViewModel}"
         Title="SkyPiano" Height="420" Width="550" MinHeight="350" MinWidth="450"
         WindowStartupLocation="CenterScreen" Background="#1E1E2E">
-    <!--  mc:Ignorable="d" 这行告诉编译器可以忽略d:开头的属性 -->
+    <!--  mc:Ignorable="d" 告诉编译器忽略 d: 开头的属性（仅设计时生效） -->
+    <!--  d:DataContext 告诉 VS 设计器"这个窗口的绑定源是 MainViewModel"，不做运行时工作 -->
+
     <Window.DataContext>
+        <!--  在 XAML 中创建 ViewModel 实例并设为 DataContext，代码隐藏无需 new MainViewModel()  -->
         <vm:MainViewModel />
     </Window.DataContext>
+
     <Window.Resources>
+        <!--  ===== IconButton：文件夹图标按钮样式 =====  -->
         <Style x:Key="IconButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#A6ADC8"/>
@@ -38,6 +43,7 @@
             </Style.Triggers>
         </Style>
 
+        <!--  ===== TransportButton：运输栏按钮样式（上一首/下一首/快退/快进） =====  -->
         <Style x:Key="TransportButton" TargetType="Button">
             <Setter Property="Background" Value="#45475A"/>
             <Setter Property="Foreground" Value="#CDD6F4"/>
@@ -60,6 +66,7 @@
             </Style.Triggers>
         </Style>
 
+        <!--  ===== PlayButton：播放/暂停按钮样式，基于 TransportButton  =====  -->
         <Style x:Key="PlayButton" TargetType="Button" BasedOn="{StaticResource TransportButton}">
             <Setter Property="Background" Value="#89B4FA"/>
             <Setter Property="Foreground" Value="#1E1E2E"/>
@@ -72,56 +79,63 @@
         </Style>
     </Window.Resources>
 
+    <!--  ===== 主布局：4 行 Grid =====  -->
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>   <!--  Row 0: 标题栏，高度自适应内容  -->
+            <RowDefinition Height="*"/>       <!--  Row 1: 播放列表，占满剩余空间  -->
+            <RowDefinition Height="Auto"/>   <!--  Row 2: 进度条，高度自适应  -->
+            <RowDefinition Height="Auto"/>   <!--  Row 3: 运输控制栏，高度自适应  -->
         </Grid.RowDefinitions>
 
-        <!-- Row 0: Track Info + Folder Button -->
+        <!--  ===== Row 0: 标题栏 =====  -->
         <Grid Grid.Row="0" Margin="2,0,2,6">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>       <!--  曲目名，占满剩余空间  -->
+                <ColumnDefinition Width="Auto"/>   <!--  文件夹按钮，自适应宽度  -->
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <!--  当前曲目文件名。TextTrimming="CharacterEllipsis" 超长时显示省略号  -->
                 <TextBlock Text="{Binding CurrentTrackName}" FontSize="15" FontWeight="SemiBold"
                            Foreground="#CDD6F4" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" MaxWidth="200"/>
+                <!--  曲目索引："3/12"  -->
                 <TextBlock Text="{Binding TrackIndex}" FontSize="12" Foreground="#A6ADC8"
                            VerticalAlignment="Center" Margin="8,0,0,0"/>
             </StackPanel>
 
-            <!-- 切换文件夹按钮 -->
+            <!--  切换文件夹按钮，绑定 SwitchFolderCommand，显示文件夹图标 &#x1F4C1;  -->
             <Button Grid.Column="1" Command="{Binding SwitchFolderCommand}"
                     Content="&#x1F4C1;" Style="{StaticResource IconButton}"
                     ToolTip="切换 MIDI 文件夹"/>
         </Grid>
 
-        <!-- Row 1: Playlist -->
+        <!--  ===== Row 1: 播放列表 =====  -->
         <ListBox Grid.Row="1"
                  ItemsSource="{Binding PlaylistItems}"
                  SelectedIndex="{Binding SelectedTrackIndex, Mode=TwoWay}"
                  Background="Transparent" BorderBrush="#45475A" BorderThickness="1"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <!--  ItemsSource: 数据源来自 ViewModel 的 PlaylistItems 集合  -->
+            <!--  SelectedIndex: 双向绑定选中索引，用户点击列表项时回传给 ViewModel  -->
             <ListBox.ItemTemplate>
+                <!--  DataTemplate: 定义每个列表项的视觉效果  -->
                 <DataTemplate DataType="{x:Type vm:TrackItemViewModel}">
                     <Grid Height="32" Margin="2,1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>   <!--  播放指示器  -->
+                            <ColumnDefinition Width="*"/>       <!--  文件名  -->
                         </Grid.ColumnDefinitions>
 
-                        <!-- 播放指示器 -->
+                        <!--  ▶ 播放指示器：仅当前播放的曲目显示  -->
                         <TextBlock Grid.Column="0" Text="&#x25B6;" FontSize="10"
                                    VerticalAlignment="Center" Margin="0,0,6,0"
                                    Foreground="#89B4FA">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Style.Triggers>
+                                        <!--  DataTrigger 根据 IsPlaying 的值切换可见性  -->
                                         <DataTrigger Binding="{Binding IsPlaying}" Value="True">
                                             <Setter Property="Visibility" Value="Visible"/>
                                         </DataTrigger>
@@ -133,13 +147,14 @@
                             </TextBlock.Style>
                         </TextBlock>
 
-                        <!-- 曲目文件名 -->
+                        <!--  曲目文件名  -->
                         <TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="13"
                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#A6ADC8"/>
+                                    <Setter Property="Foreground" Value="#A6ADC8"/>  <!--  默认灰色  -->
                                     <Style.Triggers>
+                                        <!--  当前播放的曲目亮蓝色 + 加粗  -->
                                         <DataTrigger Binding="{Binding IsPlaying}" Value="True">
                                             <Setter Property="Foreground" Value="#89B4FA"/>
                                             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -153,33 +168,44 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <!-- Row 2: Progress -->
-        <Grid Grid.Row="2" Margin="2,10,2,6">
+        <!--  ===== Row 2: 进度条 =====  -->
+        <Grid Grid.Row="2" Margin="4,10,4,6">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>   <!--  当前时间  -->
+                <ColumnDefinition Width="*"/>       <!--  Slider 进度条  -->
+                <ColumnDefinition Width="Auto"/>   <!--  总时长  -->
             </Grid.ColumnDefinitions>
+
+            <!--  当前播放时间："01:23"，等宽字体 Consolas 避免数字跳动  -->
             <TextBlock Grid.Column="0" Text="{Binding CurrentTimeDisplay}" FontSize="12"
                        Foreground="#A6ADC8" FontFamily="Consolas" VerticalAlignment="Center" Margin="0,0,6,0"/>
-            <Slider Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Progress, Mode=OneWay}"
+
+            <!--  进度条：只读（IsEnabled="False"），Mode=OneWay 因为 Progress 是只读属性  -->
+            <Slider Grid.Column="1" Minimum="0" Maximum="1"
+                    Value="{Binding Progress, Mode=OneWay}"
                     VerticalAlignment="Center" IsEnabled="False"/>
+
+            <!--  曲目总时长："04:56"  -->
             <TextBlock Grid.Column="2" Text="{Binding DurationDisplay}" FontSize="12"
                        Foreground="#A6ADC8" FontFamily="Consolas" VerticalAlignment="Center" Margin="6,0,0,0"/>
         </Grid>
 
-        <!-- Row 3: Transport Controls -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,2">
-            <Button Command="{Binding PrevCommand}" Content="&#x23EE;" Width="38" Height="38"
-                    FontSize="16" Style="{StaticResource TransportButton}"/>
-            <Button Command="{Binding RewindCommand}" Content="&#x23EA;" Width="38" Height="38"
-                    FontSize="16" Margin="4,0" Style="{StaticResource TransportButton}"/>
-            <Button Width="48" Height="48" FontSize="22" Margin="4,0"
+        <!--  ===== Row 3: 运输控制栏 =====  -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,4">
+            <!--  ⏮ 上一首  -->
+            <Button Command="{Binding PrevCommand}" Content="&#x23EE;" Width="44" Height="44"
+                    FontSize="18" Style="{StaticResource TransportButton}"/>
+            <!--  ⏪ 快退  -->
+            <Button Command="{Binding RewindCommand}" Content="&#x23EA;" Width="44" Height="44"
+                    FontSize="18" Margin="6,0" Style="{StaticResource TransportButton}"/>
+            <!--  ▶ / ⏸ 播放/暂停：根据 IsPlaying 切换图标  -->
+            <Button Width="56" Height="56" FontSize="24" Margin="6,0"
                     Command="{Binding PlayPauseCommand}">
                 <Button.Style>
                     <Style TargetType="Button" BasedOn="{StaticResource PlayButton}">
-                        <Setter Property="Content" Value="&#x25B6;"/>
+                        <Setter Property="Content" Value="&#x25B6;"/>  <!--  ▶ 未播放时显示  -->
                         <Style.Triggers>
+                            <!--  IsPlaying=True 时切换图标为 ⏸  -->
                             <DataTrigger Binding="{Binding IsPlaying}" Value="True">
                                 <Setter Property="Content" Value="&#x23F8;"/>
                             </DataTrigger>
@@ -187,11 +213,12 @@
                     </Style>
                 </Button.Style>
             </Button>
-            <Button Command="{Binding FastForwardCommand}" Content="&#x23E9;" Width="38" Height="38"
-                    FontSize="16" Margin="4,0" Style="{StaticResource TransportButton}"/>
-            <Button Command="{Binding NextCommand}" Content="&#x23ED;" Width="38" Height="38"
-                    FontSize="16" Style="{StaticResource TransportButton}"/>
+            <!--  ⏩ 快进  -->
+            <Button Command="{Binding FastForwardCommand}" Content="&#x23E9;" Width="44" Height="44"
+                    FontSize="18" Margin="6,0" Style="{StaticResource TransportButton}"/>
+            <!--  ⏭ 下一首  -->
+            <Button Command="{Binding NextCommand}" Content="&#x23ED;" Width="44" Height="44"
+                    FontSize="18" Style="{StaticResource TransportButton}"/>
         </StackPanel>
     </Grid>
-
 </Window>

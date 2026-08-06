@@ -105,7 +105,6 @@ public class KeyPianoPlayer(IPerformer? performer = null) : IPianoPlayer {
         }
         StateChanged?.Invoke();
     }
-    #endregion 替身使者接口
     /// <summary> 选中指定索引的曲目。</summary>
     public void 恶行易施(int index) {
         // 校验
@@ -122,6 +121,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : IPianoPlayer {
         TrackChanged?.Invoke(path);
         StateChanged?.Invoke();
     }
+    #endregion 替身使者接口
     #region 调度器核心(内部)
     /// <summary> 开始或恢复播放。</summary>
     private void Play() {
