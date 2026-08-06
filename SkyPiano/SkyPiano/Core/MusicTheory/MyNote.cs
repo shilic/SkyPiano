@@ -3,8 +3,9 @@ using System.Windows.Input;
 namespace SkyPiano.Core.MusicTheory;
 
 /// <summary>
-/// 21 键音符枚举。值直接等于 MIDI 音符编号。
-/// 通过 <see cref="NoteInfoAttribute"/> 获取音名和键盘字符。
+/// 21 键音符枚举。<br></br>
+/// 值直接等于 MIDI 音符编号。<br></br>
+/// 通过 <see cref="NoteInfoAttribute"/> 获取音名和键盘字符。<br></br>
 /// <code>(int)myNote</code> 可获得 MIDI 编号。
 /// </summary>
 public enum MyNote : int {

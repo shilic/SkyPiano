@@ -11,7 +11,7 @@ namespace SkyPiano.Core.Player.Imp;
 
 /// <summary>
 /// 键盘钢琴播放器，实现 <see cref="IPianoPlayer"/> 接口。<br/>
-/// 内部集成播放调度器和播放列表管理，作为 ViewModel 唯一的 Model 层依赖。
+/// 内部集成播放调度器和播放列表管理，作为 ViewModel 唯一的 Model 层依赖。<br/>
 /// </summary>
 /// <remarks> 构造 KeyPianoPlayer。</remarks>
 /// <param name="performer">按键执行器，默认 Win32 keybd_event。</param>

@@ -142,8 +142,9 @@ public partial class MainViewModel : ObservableObject, IDisposable {
 
         // 更新播放列表高亮
         var current = _player.CurrentTrackIndex;
-        for (var i = 0; i < PlaylistItems.Count; i++)
+        for (var i = 0; i < PlaylistItems.Count; i++){
             PlaylistItems[i].IsPlaying = i == current;
+        }
     }
     private void RefreshProgress(double progress, TimeSpan time) {
         Progress = progress;
