@@ -31,24 +31,21 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _currentTimeDisplay = "";
     [ObservableProperty] private string _durationDisplay = "";
 
-    partial void OnSelectedTrackIndexChanged(int value)
-    {
+    partial void OnSelectedTrackIndexChanged(int value) {
         if (value >= 0 && value < _player.TrackCount && value != _player.CurrentTrackIndex)
             _player.SelectTrack(value);
     }
 
     // ---- 构造 ----
 
-    public MainViewModel()
-    {
+    public MainViewModel() {
         _player = new KeyPianoPlayer();
 
         _player.TrackChanged += OnTrackChanged;
         _player.StateChanged += () => Application.Current.Dispatcher.Invoke(RefreshState);
-        _player.ProgressUpdated += (p, t) => Application.Current.Dispatcher.Invoke(() =>
-        {
-            Progress = p;
-            CurrentTimeDisplay = $"{(int)t.TotalMinutes:D2}:{t.Seconds:D2}";
+        _player.ProgressUpdated += (progress, time) => Application.Current.Dispatcher.Invoke(() => {
+            Progress = progress;
+            CurrentTimeDisplay = $"{(int)time.TotalMinutes:D2}:{time.Seconds:D2}";
         });
     }
 
@@ -74,13 +71,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     // ---- 内部方法 ----
 
-    private void OnTrackChanged(string? path)
-    {
+    private void OnTrackChanged(string? path) {
         if (path == null) return;
 
         if (PlaylistItems.Count != _player.TrackCount ||
-            (PlaylistItems.Count > 0 && PlaylistItems[0].FilePath != _player.Tracks[0]))
-        {
+            (PlaylistItems.Count > 0 && PlaylistItems[0].FilePath != _player.Tracks[0])) {
             PlaylistItems.Clear();
             foreach (var trackPath in _player.Tracks)
                 PlaylistItems.Add(new TrackItemViewModel(System.IO.Path.GetFileNameWithoutExtension(trackPath), trackPath));

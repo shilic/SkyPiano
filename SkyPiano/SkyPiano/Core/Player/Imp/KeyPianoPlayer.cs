@@ -81,16 +81,22 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
     /// <summary> 切换到上一个。</summary>
     public void 男人领域() { 
         SelectTrack((_trackIndex - 1 + _tracks.Length) % _tracks.Length); 
-        StateChanged?.Invoke(); 
+        //StateChanged?.Invoke(); 
     }
     /// <summary> 快退 5 秒。</summary>
-    public void 败者食尘() => Seek(-TimeSpan.FromSeconds(5));
+    public void 败者食尘() { 
+        Seek(-TimeSpan.FromSeconds(5));
+        //StateChanged?.Invoke();
+    }
     /// <summary> 快进 5 秒。</summary>
-    public void 天堂制造() => Seek(TimeSpan.FromSeconds(5));
+    public void 天堂制造() { 
+        Seek(TimeSpan.FromSeconds(5));
+        //StateChanged?.Invoke();
+    }
     /// <summary> 切换到下一个。</summary>
     public void 墓志铭() { 
         SelectTrack((_trackIndex + 1) % _tracks.Length);
-        StateChanged?.Invoke(); 
+        //StateChanged?.Invoke(); 
     }
     /// <summary> 切换播放列表文件夹。</summary>
     public void 恶行易施(string name) {
@@ -116,9 +122,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
         _score = path.FromMidiFile();
         // 触发外部UI的更新
         TrackChanged?.Invoke(path);
-        //_index = 0;
-        //_pressedKeys.Clear();
-        //_pausedElapsedUs = 0;
+        StateChanged?.Invoke();
     }
     #region 调度器核心
     /// <summary> 开始或恢复播放。</summary>
@@ -191,10 +195,9 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
         }
         _pausedElapsedUs = newElapsed;
 
-        if (IsPlaying){
-            Play();
-        }
+        Play();
         StateChanged?.Invoke();
+        ProgressUpdated?.Invoke(Progress, CurrentTime);
     }
     /// <summary>
     /// 定时器回调：将经过时间与事件列表对比，触发所有到期的事件。
