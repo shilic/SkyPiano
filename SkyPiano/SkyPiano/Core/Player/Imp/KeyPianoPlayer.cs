@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using SkyPiano.Core.MusicTheory;
 using SkyPiano.Core.Performer.Base;
 using SkyPiano.Core.Performer.Imp;
@@ -99,7 +100,9 @@ public class KeyPianoPlayer(IPerformer? performer = null) : IPianoPlayer {
     /// <summary> 切换播放列表文件夹。</summary>
     public void 恶行易施(string name) {
         _trackIndex = -1;
-        _tracks = Directory.GetFiles(name, "*.mid", SearchOption.TopDirectoryOnly).OrderBy(f => f).ToArray();
+        _tracks = ScoreParser.SupportedExtensions
+            .SelectMany(ext => Directory.GetFiles(name, $"*{ext}", SearchOption.TopDirectoryOnly))
+            .OrderBy(f => f).ToArray();
         if (_tracks.Length > 0) {
             恶行易施(0);
         }
@@ -116,7 +119,8 @@ public class KeyPianoPlayer(IPerformer? performer = null) : IPianoPlayer {
         _trackIndex = index;
         var path = _tracks[index];
         // 解析曲目
-        _score = path.FromMidiFile();
+        _score = path.ToScore();
+        if (_score == null) return;
         // 触发外部UI的更新
         TrackChanged?.Invoke(path);
         StateChanged?.Invoke();
