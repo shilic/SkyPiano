@@ -23,39 +23,38 @@ public partial class MainViewModel : ObservableObject, IDisposable {
     #region 被观察的属性（UI 绑定）
     /// <summary> 播放列表中的所有曲目项，供 UI 的 ListBox 绑定。</summary>
     public ObservableCollection<TrackItemViewModel> PlaylistItems { get; } = [];
-    /// <summary>当前播放曲目的文件名（不含扩展名）。</summary>
+    /// <summary> 当前播放曲目的文件名（不含扩展名）。</summary>
     [ObservableProperty]
     private string _currentTrackName = "";
-    /// <summary>曲目索引显示字符串，格式为"当前序号/总数"，如"3/12"。</summary>
+    /// <summary> 曲目索引显示字符串，格式为"当前序号/总数"，如"3/12"。</summary>
     [ObservableProperty]
     private string _trackIndex = "";
-    /// <summary>当前是否正在播放。用于切换播放/暂停按钮的图标。</summary>
+    /// <summary> 当前是否正在播放。用于切换播放/暂停按钮的图标。</summary>
     [ObservableProperty]
     private bool _isPlaying;
-    /// <summary>播放列表中当前选中的曲目索引（从 0 开始，-1 为无选中）。</summary>
+    /// <summary> 播放列表中当前选中的曲目索引（从 0 开始，-1 为无选中）。</summary>
     [ObservableProperty]
     private int _selectedTrackIndex = -1;
-    /// <summary>播放进度，0.0（开头）到 1.0（结尾）。</summary>
+    /// <summary> 播放进度，0.0（开头）到 1.0（结尾）。</summary>
     [ObservableProperty]
     private double _progress;
-    /// <summary>当前播放时间的格式化字符串，格式为"mm:ss"。</summary>
+    /// <summary> 当前播放时间的格式化字符串，格式为"mm:ss"。</summary>
     [ObservableProperty]
     private string _currentTimeDisplay = "";
-    /// <summary>曲目总时长的格式化字符串，格式为"mm:ss"。</summary>
+    /// <summary> 曲目总时长的格式化字符串，格式为"mm:ss"。</summary>
     [ObservableProperty]
     private string _durationDisplay = "";
     #endregion 被观察的属性（UI 绑定）
-    #region 被观察的状态
+    #region 被观察的UI状态
     /// <summary>
     /// 双向绑定<br></br>
     /// 当用户通过 ListBox 选中曲目时由源生成器回调。<br></br>
     /// 索引有效且不同于当前索引时切换到对应曲目。<br></br>
     /// </summary>
     partial void OnSelectedTrackIndexChanged(int value) {
-        //if (value >= 0 && value < _player.TrackCount && value != _player.CurrentTrackIndex)
         _player.恶行易施(value);
     }
-    #endregion 被观察的状态
+    #endregion 被观察的UI状态
     #region 构造 MainViewModel
     /// <summary>
     /// 构造 MainViewModel，创建播放器并注册事件回调。
