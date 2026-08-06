@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Windows.Input;
 
 namespace SkyPiano.Core.MusicTheory;
 
@@ -13,6 +14,7 @@ public static class NoteTool {
     private static readonly Dictionary<char, MyNote> CharToNote = [];
     /// <summary>MyNote → 特性的缓存。</summary>
     private static readonly Dictionary<MyNote, NoteInfoAttribute> InfoCache = [];
+    private static readonly Dictionary<MyNote, Key> KeyCache = [];
 
     static NoteTool() {
         foreach (MyNote note in Enum.GetValues<MyNote>()) {
@@ -20,6 +22,7 @@ public static class NoteTool {
             MidiToNote[(int)note] = note;
             CharToNote[info.KeyChar] = note;
             InfoCache[note] = info;
+            KeyCache[note] = info.Key;
         }
 
         // 黑键映射到低一位白键：C#→C, D#→D, F#→F, G#→G, A#→A
@@ -74,10 +77,12 @@ public static class NoteTool {
     private static extern short VkKeyScan(char ch);
     /// <summary>获取 MyNote 对应的 Windows 虚拟键码。</summary>
     public static byte ToVirtualKey(this MyNote note) {
-        var result = VkKeyScan(char.ToUpperInvariant(note.ToKeyChar()));
-        if (result == -1)
-            throw new ArgumentException($"无法将字符 '{note.ToKeyChar()}' 转换为虚拟键码。");
-        return (byte)(result & 0xFF);
+        Key key = KeyCache[note];
+        int virtualKey = KeyInterop.VirtualKeyFromKey(key);
+        //var result = VkKeyScan(char.ToUpperInvariant(note.ToKeyChar()));
+        //if (result == -1)
+        //    throw new ArgumentException($"无法将字符 '{note.ToKeyChar()}' 转换为虚拟键码。");
+        return (byte)(virtualKey & 0xFF);
     }
     #endregion 音符转虚拟键码
 }

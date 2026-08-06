@@ -1,3 +1,5 @@
+using System.Windows.Input;
+
 namespace SkyPiano.Core.MusicTheory;
 
 /// <summary>
@@ -10,10 +12,11 @@ namespace SkyPiano.Core.MusicTheory;
 /// <param name="keyChar">键盘字符，如 'A'。</param>
 /// <param name="midiNumber">MIDI 数字，如 60 表示 C4。</param>
 [AttributeUsage(AttributeTargets.Field)]
-public class NoteInfoAttribute(string name, char keyChar, int midiNumber) : Attribute {
+public class NoteInfoAttribute(string name, char keyChar, int midiNumber, Key key) : Attribute {
     /// <summary>音名，如 "C3"、"D4"、"B5"。</summary>
     public string Name { get; } = name;
     /// <summary>键盘字符，如 'A'、'Z'。</summary>
     public char KeyChar { get; } = keyChar;
     public int MidiNumber { get; } = midiNumber;
+    public Key Key { get; } = key;
 }
