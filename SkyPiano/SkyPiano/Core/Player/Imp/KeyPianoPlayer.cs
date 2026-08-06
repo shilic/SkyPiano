@@ -49,7 +49,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
     /// <summary> 播放进度更新时触发。参数：progress(0~1)、currentTime。</summary>
     public event Action<double, TimeSpan>? ProgressUpdated;
     #endregion 事件
-    #region 只读属性
+    #region 只读属性(通过回调传给ViewModel)
     /// <summary> 当前是否正在播放。</summary>
     public bool IsPlaying => _timer != null;
     public bool IsPaused => _timer == null;
@@ -73,7 +73,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
         _trackIndex >= 0 && _trackIndex < _tracks.Length ? _tracks[_trackIndex] : null;
     /// <summary> 曲目列表（只读）。</summary>
     public IReadOnlyList<string> Tracks => _tracks;
-    #endregion 只读属性
+    #endregion 只读属性(通过回调传给ViewModel)
     #region 替身使者接口
     /// <summary> 暂停 / 恢复播放。</summary>
     public void 咋瓦鲁多() {
@@ -122,7 +122,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
         TrackChanged?.Invoke(path);
         StateChanged?.Invoke();
     }
-    #region 调度器核心
+    #region 调度器核心(内部)
     /// <summary> 开始或恢复播放。</summary>
     private void Play() {
         if (_score == null || _score.Events.Length == 0) return;
@@ -229,7 +229,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
             StateChanged?.Invoke();
         }
     }
-    #endregion 调度器核心
+    #endregion 调度器核心(内部)
     #region 辅助方法
     /// <summary> 释放当前所有被按下的键。<br></br>
     /// 用于暂停，停止或播放完毕时，确保没有按键残留按下状态。<br></br>
