@@ -1,7 +1,8 @@
 using System.IO;
 using System.Xml.Linq;
+using SkyPiano.Core.MusicTheory;
 
-namespace SkyPiano.Core.MusicTheory;
+namespace SkyPiano.Core.MusicTheory.Parsers;
 
 /// <summary>
 /// MusicXML → MyScore 转换器。处理单声部（Part）、单旋律线，忽略和弦和装饰音。

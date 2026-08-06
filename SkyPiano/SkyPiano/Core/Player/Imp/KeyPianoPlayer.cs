@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using SkyPiano.Core.MusicTheory;
+using SkyPiano.Core.MusicTheory.Parsers;
 using SkyPiano.Core.Performer.Base;
 using SkyPiano.Core.Performer.Imp;
 using SkyPiano.Core.Player.Base;
