@@ -80,23 +80,19 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
     }
     /// <summary> 切换到上一个。</summary>
     public void 男人领域() { 
-        SelectTrack((_trackIndex - 1 + _tracks.Length) % _tracks.Length); 
-        //StateChanged?.Invoke(); 
+        SelectTrack((_trackIndex - 1 + _tracks.Length) % _tracks.Length);
     }
     /// <summary> 快退 5 秒。</summary>
     public void 败者食尘() { 
         Seek(-TimeSpan.FromSeconds(5));
-        //StateChanged?.Invoke();
     }
     /// <summary> 快进 5 秒。</summary>
     public void 天堂制造() { 
         Seek(TimeSpan.FromSeconds(5));
-        //StateChanged?.Invoke();
     }
     /// <summary> 切换到下一个。</summary>
     public void 墓志铭() { 
         SelectTrack((_trackIndex + 1) % _tracks.Length);
-        //StateChanged?.Invoke(); 
     }
     /// <summary> 切换播放列表文件夹。</summary>
     public void 恶行易施(string name) {
