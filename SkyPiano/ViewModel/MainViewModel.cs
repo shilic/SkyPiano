@@ -3,18 +3,19 @@ using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using SkyPiano.Core.Player.Base;
 using SkyPiano.Core.Player.Imp;
 
 namespace SkyPiano.ViewModel;
 
 /// <summary>
-/// 主窗口的视图模型。只依赖 <see cref="KeyPianoPlayer"/>，作为 UI 层唯一的 Model 依赖。
+/// 主窗口的视图模型。通过构造函数注入 <see cref="IPianoPlayer"/>，默认使用 <see cref="KeyPianoPlayer"/>。
 /// 使用 CommunityToolkit.Mvvm 源生成器实现属性通知和命令绑定。
 /// </summary>
 public partial class MainViewModel : ObservableObject, IDisposable {
     #region 内部只读字段
-    /// <summary> 键盘钢琴播放器，内部集成调度器和播放列表。</summary>
-    private readonly KeyPianoPlayer _player;
+    /// <summary>键盘钢琴播放器接口，通过构造函数注入，默认使用 KeyPianoPlayer。</summary>
+    private readonly IPianoPlayer _player;
     /// <summary> 默认 MIDI 文件夹路径：用户文档目录下的 "SkyPiano/MIDI"。</summary>
     private static readonly string DefaultMidiFolder = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SkyPiano", "MIDI");
@@ -58,7 +59,6 @@ public partial class MainViewModel : ObservableObject, IDisposable {
     #region 构造 MainViewModel
     /// <summary>
     /// 构造 MainViewModel，创建播放器并注册事件回调。
-    /// 所有回调均通过 <see cref="Application.Current.Dispatcher"/> 封送到 UI 线程。
     /// </summary>
     public MainViewModel() {
         _player = new KeyPianoPlayer();
