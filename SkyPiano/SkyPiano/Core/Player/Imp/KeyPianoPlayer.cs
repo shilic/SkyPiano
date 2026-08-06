@@ -33,24 +33,24 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
     /// <summary> 当前使用的演奏者实例。(通过依赖注入解耦)。按键执行器。 </summary>
     private readonly IPerformer _performer = performer ?? new KeySimulator();
     #endregion 调度器字段
-
-    // ==================== 播放列表字段 ====================
+    #region 播放列表字段
     /// <summary>MIDI 文件路径列表。</summary>
     private string[] _tracks = []; 
     /// <summary>当前曲目索引，-1 为空。</summary>
     private int _trackIndex = -1;
-
-    // ==================== 事件 ==================== 
+    #endregion 播放列表字段
+    #region 事件
     /// <summary> 曲目切换时触发。参数为新的文件路径（null 表示列表为空）。</summary>
     public event Action<string?>? TrackChanged; 
     /// <summary> 播放状态变化时触发。</summary>
     public event Action? StateChanged; 
     /// <summary> 播放进度更新时触发。参数：progress(0~1)、currentTime。</summary>
     public event Action<double, TimeSpan>? ProgressUpdated;
-
-    // ==================== 属性 ====================
+    #endregion 事件
+    #region 只读属性
     /// <summary> 当前是否正在播放。</summary>
     public bool IsPlaying => _timer != null;
+    public bool IsPaused => _timer == null;
     /// <summary> 当前播放位置。</summary>
     public TimeSpan CurrentTime => TimeSpan.FromMicroseconds(GetElapsedMicroseconds());
     /// <summary> 曲目总时长。</summary>
@@ -62,21 +62,17 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
             return dur > 0 ? (double)GetElapsedMicroseconds() / dur : 0;
         }
     } 
-    /// <summary>播放列表曲目总数。</summary>
+    /// <summary> 播放列表曲目总数。</summary>
     public int TrackCount => _tracks.Length;
-
-    /// <summary>当前曲目索引（0 开始，-1 为空）。</summary>
+    /// <summary> 当前曲目索引（0 开始，-1 为空）。</summary>
     public int CurrentTrackIndex => _trackIndex;
-
-    /// <summary>当前曲目路径（null 为空）。</summary>
+    /// <summary> 当前曲目路径（null 为空）。</summary>
     public string? CurrentTrackPath =>
         _trackIndex >= 0 && _trackIndex < _tracks.Length ? _tracks[_trackIndex] : null;
-
-    /// <summary>曲目列表（只读）。</summary>
+    /// <summary> 曲目列表（只读）。</summary>
     public IReadOnlyList<string> Tracks => _tracks;
-
-    // ==================== 替身使者接口 ====================
-
+    #endregion 只读属性
+    #region 替身使者接口
     /// <summary> 暂停 / 恢复播放。</summary>
     public void 咋瓦鲁多() {
         if (IsPlaying) { Pause(); } else { Play(); }
@@ -105,6 +101,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
         }
         StateChanged?.Invoke();
     }
+    #endregion 替身使者接口
     /// <summary> 选中指定索引的曲目。</summary>
     public void SelectTrack(int index) {
         // 校验
@@ -123,10 +120,10 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
         //_pressedKeys.Clear();
         //_pausedElapsedUs = 0;
     }
-    // ==================== 调度器核心 ====================
+    #region 调度器核心
     /// <summary> 开始或恢复播放。</summary>
     private void Play() {
-        if (_score == null || _score.Events.Count == 0) return;
+        if (_score == null || _score.Events.Length == 0) return;
         // 恢复暂停时的已播放时间，作为当前时间的偏移量
         long resumeOffset = _pausedElapsedUs;
         // 重置计时器，会将 _stopwatch 的计时归零并重新开始计时
@@ -178,7 +175,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
         if (deltaUs >= 0) {
             // 快进
             newElapsed = Math.Min(_pausedElapsedUs + deltaUs, (long)_score.Duration.TotalMicroseconds);
-            while (_index < _score.Events.Count && _score.Events[_index].TimeUs <= newElapsed){
+            while (_index < _score.Events.Length && _score.Events[_index].TimeUs <= newElapsed){
                 _index++;
             }
         }
@@ -208,7 +205,7 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
         // 当前总经过时间 = 已偏移量 + Stopwatch 增量
         long elapsedUs = resumeOffsetUs + (_stopwatch.ElapsedMilliseconds * 1000);
         // 不是时间刚好等于按下时间点的时候执行，而是当前时间超过按下时间点一些的时候就执行。
-        while (_index < _score.Events.Count && _score.Events[_index].TimeUs <= elapsedUs) {
+        while (_index < _score.Events.Length && _score.Events[_index].TimeUs <= elapsedUs) {
             var evt = _score.Events[_index];
             if (evt.IsPress) {
                 // 避免重复按下同一键
@@ -223,40 +220,37 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
             }
             _index++;
         }
-
         // 进度通知
         ProgressUpdated?.Invoke(Progress, CurrentTime);
-
         // 所有事件已触发完毕
-        if (_index >= _score.Events.Count)
-        {
-            _timer?.Dispose();
-            _timer = null;
-            _stopwatch.Stop();
-            ReleaseAll();
-
-            // 自动下一首
-            墓志铭();
+        if (_index >= _score.Events.Length) {
+            Stop();
             StateChanged?.Invoke();
         }
     }
-
-    // ==================== 辅助方法 ====================
+    #endregion 调度器核心
+    #region 辅助方法
+    /// <summary> 释放当前所有被按下的键。<br></br>
+    /// 用于暂停，停止或播放完毕时，确保没有按键残留按下状态。<br></br>
+    /// </summary>
     private void ReleaseAll() {
+        // 遍历当前按下的键集合，逐个释放
         foreach (var key in _pressedKeys.ToList()) {
             _performer.KeyRelease(key);
         }
         _pressedKeys.Clear();
     }
-
+    /// <summary> 获取当前经过的微秒数。 </summary>
     private long GetElapsedMicroseconds() {
-        if (_timer == null) return _pausedElapsedUs;
+        // 如果处于暂停状态，直接返回当前消逝的时间。
+        if (IsPaused) return _pausedElapsedUs;
+        // 如果正在运行，返回已暂停时间 + 当前计时器的增量。
         return _pausedElapsedUs + (_stopwatch.ElapsedMilliseconds * 1000);
     }
-
-    public void Dispose()
-    {
+    /// <summary> 释放定时器资源并释放所有按键。  </summary>
+    public void Dispose() {
         _timer?.Dispose();
         ReleaseAll();
     }
+    #endregion 辅助方法
 }

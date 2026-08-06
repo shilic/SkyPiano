@@ -78,7 +78,7 @@ public class KeyScheduler(IPerformer performer) : IDisposable
     /// <summary> 开始或恢复播放。</summary>
     public void Play()
     {
-        if (_score == null || _score.Events.Count == 0) return;
+        if (_score == null || _score.Events.Length == 0) return;
         // 恢复暂停时的已播放时间，作为当前时间的偏移量
         long resumeOffset = _pausedElapsedUs;
         // 重置计时器，会将 _stopwatch 的计时归零并重新开始计时
@@ -139,7 +139,7 @@ public class KeyScheduler(IPerformer performer) : IDisposable
          * 退出循环时，还不会立马执行下一个音符的演奏，还需要等到时间满足条件。
          * 索引值不断增加，直到找到第一个事件的时间大于新的已播放时间；
          * 退出循环，此时Trik仍然再运行 */
-        while (_index < _score.Events.Count && _score.Events[_index].TimeUs <= newElapsed)
+        while (_index < _score.Events.Length && _score.Events[_index].TimeUs <= newElapsed)
             _index++;
 
         _pausedElapsedUs = newElapsed;
@@ -176,8 +176,7 @@ public class KeyScheduler(IPerformer performer) : IDisposable
         long elapsedUs = resumeOffsetUs + (_stopwatch.ElapsedMilliseconds * 1000);
 
         // 不是时间刚好等于按下时间点的时候执行，而是当前时间超过按下时间点一些的时候就执行。
-        while (_index < _score.Events.Count && _score.Events[_index].TimeUs <= elapsedUs)
-        {
+        while (_index < _score.Events.Length && _score.Events[_index].TimeUs <= elapsedUs) {
             var evt = _score.Events[_index];
             if (evt.IsPress)
             {
@@ -200,7 +199,7 @@ public class KeyScheduler(IPerformer performer) : IDisposable
         ProgressChanged?.Invoke(Progress, CurrentTime);
 
         // 所有事件已触发完毕
-        if (_index >= _score.Events.Count)
+        if (_index >= _score.Events.Length)
         {
             _timer?.Dispose();
             _timer = null;
