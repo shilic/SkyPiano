@@ -1,17 +1,19 @@
-using System.IO;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
-using SkyPiano.Core.MusicTheory;
+using System.IO;
+using System.Windows;
+using System.Xml.Linq;
 
 namespace SkyPiano.Core.MusicTheory.Parsers;
 
-/// <summary>
-/// MIDI 文件解析器（.mid / .midi）。
-/// </summary>
-public static class MidiParser {
-    /// <summary>从 MIDI 文件构建乐谱。非 .mid / .midi 后缀直接报错。</summary>
-    /// <exception cref="ArgumentException">文件后缀不是 .mid 或 .midi 时抛出。</exception>
-    public static MyScore MidiFileToScore(this string filePath) {
+/// <summary>MIDI 文件解析器（.mid / .midi）。</summary>
+public class MidiParser : IScoreParser {
+    /// <inheritdoc />
+    public string Extension => ".mid";
+
+    /// <inheritdoc />
+    /// <exception cref="ArgumentException">文件后缀不是 .mid / .midi 时抛出。</exception>
+    public MyScore? Parse(string filePath) {
         var ext = Path.GetExtension(filePath).ToLowerInvariant();
         if (ext is not ".mid" and not ".midi")
             throw new ArgumentException($"文件后缀 '{ext}' 不是有效的 MIDI 格式（需为 .mid 或 .midi）。");
@@ -39,9 +41,8 @@ public static class MidiParser {
             return cmp != 0 ? cmp : a.IsPress.CompareTo(b.IsPress);
         });
 
-        var events = list.ToArray();
         var duration = midiFile.GetDuration<MetricTimeSpan>();
         var name = Path.GetFileNameWithoutExtension(filePath);
-        return new MyScore(name, events, TimeSpan.FromMicroseconds(duration.TotalMicroseconds));
+        return new MyScore(name, list.ToArray(), TimeSpan.FromMicroseconds(duration.TotalMicroseconds));
     }
 }
