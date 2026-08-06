@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using SkyPiano.Core.MusicTheory;
 using SkyPiano.Core.Performer.Base;
-using SkyPiano.SkyPiano.Core.MusicTheory;
 
 namespace SkyPiano.Core.Player.Imp;
 

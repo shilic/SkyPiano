@@ -1,4 +1,3 @@
-using SkyPiano.SkyPiano.Core.MusicTheory;
 
 namespace SkyPiano.Core.MusicTheory;
 

@@ -56,9 +56,15 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
     [RelayCommand] private void PlayPause() => _player.咋瓦鲁多();
 
-    [RelayCommand] private void Next() { _player.墓志铭(); _player.RequestPlay(); }
+    [RelayCommand] private void Next() { 
+        _player.墓志铭(); 
+        //_player.RequestPlay(); 
+    }
 
-    [RelayCommand] private void Prev() { _player.男人领域(); _player.RequestPlay(); }
+    [RelayCommand] private void Prev() { 
+        _player.男人领域(); 
+        //_player.RequestPlay(); 
+    }
 
     [RelayCommand] private void Rewind() => _player.败者食尘();
 

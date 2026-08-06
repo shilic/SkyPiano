@@ -1,10 +1,8 @@
+using System.IO;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
-using SkyPiano.Core.MusicTheory;
-using System.IO;
-using MyNoteEvent = SkyPiano.Core.MusicTheory.MyNoteEvent;
 
-namespace SkyPiano.SkyPiano.Core.MusicTheory;
+namespace SkyPiano.Core.MusicTheory;
 
 /// <summary>
 /// 乐谱：全曲原子事件的纯数据容器。<br/>

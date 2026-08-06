@@ -4,7 +4,6 @@ using SkyPiano.Core.MusicTheory;
 using SkyPiano.Core.Performer.Base;
 using SkyPiano.Core.Performer.Imp;
 using SkyPiano.Core.Player.Base;
-using SkyPiano.SkyPiano.Core.MusicTheory;
 
 namespace SkyPiano.Core.Player.Imp;
 
@@ -15,21 +14,25 @@ namespace SkyPiano.Core.Player.Imp;
 /// <remarks> 构造 KeyPianoPlayer。</remarks>
 /// <param name="performer">按键执行器，默认 Win32 keybd_event。</param>
 public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDisposable {
-    // ==================== 调度器字段 ====================
+    #region 调度器字段
     /// <summary> 当前加载的乐谱。</summary>
     private MyScore? _score;
     /// <summary> 当前播放序号。</summary>
     private int _index;
-    /// <summary> 临时工：记录每次 Play() 开始后经过的时间。</summary>
+    /// <summary> 高精度计时器，记录从 Play() 开始经过的时间。<br></br>
+    /// 每次暂停都会重新归零(临时工)<br></br>
+    /// 相当于一次播放(恢复)到暂停之间的时间<br></br>
+    /// </summary>
     private readonly Stopwatch _stopwatch = new();
-    /// <summary> 调度定时器，约 10ms 间隔。</summary>
+    /// <summary> 调度定时器，约 10ms 间隔检查待触发事件。</summary>
     private Timer? _timer;
-    /// <summary> 当前按下的键集合。</summary>
+    /// <summary> 当前按下的键集合，用于避免重复按下/释放。</summary>
     private readonly HashSet<MyNote> _pressedKeys = [];
-    /// <summary> 持久记忆：暂停时的已播放时间（微秒）。</summary>
+    /// <summary> 持久记忆暂停时的已播放时间（微秒），用于恢复播放。</summary>
     private long _pausedElapsedUs;
-    /// <summary> 按键执行器。演奏者。 </summary>
+    /// <summary> 当前使用的演奏者实例。(通过依赖注入解耦)。按键执行器。 </summary>
     private readonly IPerformer _performer = performer ?? new KeySimulator();
+    #endregion 调度器字段
 
     // ==================== 播放列表字段 ====================
     /// <summary>MIDI 文件路径列表。</summary>
@@ -76,149 +79,145 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
 
     /// <summary> 暂停 / 恢复播放。</summary>
     public void 咋瓦鲁多() {
-        if (_timer != null) {
-            _timer?.Dispose();
-            _timer = null;
-            _stopwatch.Stop();
-            _pausedElapsedUs += _stopwatch.ElapsedMilliseconds * 1000;
-            ReleaseAll();
-        }
-        else
-        {
-            Play();
-        }
+        if (IsPlaying) { Pause(); } else { Play(); }
         StateChanged?.Invoke();
     }
-
-    /// <summary>切换到上一个个。</summary>
-    public void 男人领域() { SelectTrack((_trackIndex - 1 + _tracks.Length) % _tracks.Length); StateChanged?.Invoke(); }
-
-    /// <summary>快退 5 秒。</summary>
+    /// <summary> 切换到上一个。</summary>
+    public void 男人领域() { 
+        SelectTrack((_trackIndex - 1 + _tracks.Length) % _tracks.Length); 
+        StateChanged?.Invoke(); 
+    }
+    /// <summary> 快退 5 秒。</summary>
     public void 败者食尘() => Seek(-TimeSpan.FromSeconds(5));
-
-    /// <summary>快进 5 秒。</summary>
+    /// <summary> 快进 5 秒。</summary>
     public void 天堂制造() => Seek(TimeSpan.FromSeconds(5));
-
-    /// <summary>切换到下一个个。</summary>
-    public void 墓志铭() { SelectTrack((_trackIndex + 1) % _tracks.Length); StateChanged?.Invoke(); }
-
-    /// <summary>切换播放列表文件夹。</summary>
-    public void 恶行易施(string name)
-    {
+    /// <summary> 切换到下一个。</summary>
+    public void 墓志铭() { 
+        SelectTrack((_trackIndex + 1) % _tracks.Length);
+        StateChanged?.Invoke(); 
+    }
+    /// <summary> 切换播放列表文件夹。</summary>
+    public void 恶行易施(string name) {
         _trackIndex = -1;
         _tracks = Directory.GetFiles(name, "*.mid", SearchOption.TopDirectoryOnly).OrderBy(f => f).ToArray();
-        if (_tracks.Length > 0)
+        if (_tracks.Length > 0) {
             SelectTrack(0);
+        }
         StateChanged?.Invoke();
     }
-
-    /// <summary>选中指定索引的曲目。</summary>
-    public void SelectTrack(int index)
-    {
+    /// <summary> 选中指定索引的曲目。</summary>
+    public void SelectTrack(int index) {
+        // 校验
         if (index < 0 || index >= _tracks.Length) return;
         if (index == _trackIndex) return;
-
         // 弃置当前播放
-        StopScheduler();
-
+        Stop();
+        // 切换曲目
         _trackIndex = index;
         var path = _tracks[index];
-        TrackChanged?.Invoke(path);
-
         // 解析曲目
         _score = path.FromMidiFile();
-        _index = 0;
-        _pressedKeys.Clear();
-        _pausedElapsedUs = 0;
+        // 触发外部UI的更新
+        TrackChanged?.Invoke(path);
+        //_index = 0;
+        //_pressedKeys.Clear();
+        //_pausedElapsedUs = 0;
     }
-
-    /// <summary>强制开始播放（已播放则无操作）。</summary>
-    public void RequestPlay()
-    {
-        if (_timer == null)
-            Play();
-    }
-
     // ==================== 调度器核心 ====================
-
-    private void Play()
-    {
+    /// <summary> 开始或恢复播放。</summary>
+    private void Play() {
         if (_score == null || _score.Events.Count == 0) return;
-
+        // 恢复暂停时的已播放时间，作为当前时间的偏移量
         long resumeOffset = _pausedElapsedUs;
+        // 重置计时器，会将 _stopwatch 的计时归零并重新开始计时
         _stopwatch.Restart();
+        // 释放旧的定时器，避免重复触发
         _timer?.Dispose();
+        // 使用 System.Threading.Timer，约 10ms 间隔轮询事件
         _timer = new Timer(_ => Tick(resumeOffset), null, 0, 10);
     }
-
-    private void StopScheduler()
-    {
+    /// <summary> 暂停播放，保持当前位置。 </summary>
+    private void Pause() {
+        // 释放定时器，避免继续触发事件
+        _timer?.Dispose();
+        // 将定时器引用置空
+        _timer = null;
+        // 停表：停止计时器 (关键代码)
+        _stopwatch.Stop();
+        // 使用 += 累加记录已播放时间；ms → us 近似
+        _pausedElapsedUs += _stopwatch.ElapsedMilliseconds * 1000;
+        // 暂停时，需要释放所有当前按下的键
+        ReleaseAll();
+    }
+    /// <summary> 完全停止播放，重置到开头并释放所有按键。  </summary>
+    private void Stop() {
+        // 释放定时器，避免继续触发事件
         _timer?.Dispose();
         _timer = null;
+        // 停止 + 归零
         _stopwatch.Reset();
+        // 重置序号和已播放时间
         _index = 0;
         _pausedElapsedUs = 0;
+        // 停止时，需要释放所有当前按下的键
         ReleaseAll();
     }
-
-    private void Seek(TimeSpan delta)
-    {
-        bool wasPlaying = _timer != null;
-
-        // 暂停
-        _timer?.Dispose();
-        _timer = null;
-        _stopwatch.Stop();
-        _pausedElapsedUs += _stopwatch.ElapsedMilliseconds * 1000;
-        ReleaseAll();
-
+    /// <summary>
+    /// 快进或快退指定时间。正数为快进，负数为快退。
+    /// </summary>
+    /// <param name="delta">快进或快退指定时间。正数为快进，负数为快退。</param>
+    private void Seek(TimeSpan delta) {
         if (_score == null) return;
-
+        Pause();
         long deltaUs = (long)delta.TotalMicroseconds;
         long newElapsed;
-
-        if (deltaUs >= 0)
-        {
+        /* 快进时，当前已经消逝的时间一定大于当前索引事件的时间，故让当前事件的时间 > 消逝的时间 就退出循环是合理的；
+        * 退出循环时，还不会立马执行下一个音符的演奏，还需要等到时间满足条件。
+        * 索引值不断增加，直到找到第一个事件的时间大于新的已播放时间；
+        * 退出循环，此时Trik仍然再运行 */
+        if (deltaUs >= 0) {
             // 快进
             newElapsed = Math.Min(_pausedElapsedUs + deltaUs, (long)_score.Duration.TotalMicroseconds);
-            while (_index < _score.Events.Count && _score.Events[_index].TimeUs <= newElapsed)
+            while (_index < _score.Events.Count && _score.Events[_index].TimeUs <= newElapsed){
                 _index++;
+            }
         }
-        else
-        {
+        /* 快退时，当前已经消逝的时间一定小于当前索引事件的时间，故让当前事件的时间 < 消逝的时间 就退出循环是合理的；
+         * 退出循环时，会立即执行下一个音符的演奏，因为当前时间已经流逝到该事件的时间了。
+         */
+        else {
             // 快退
             newElapsed = Math.Max(0, _pausedElapsedUs + deltaUs);
-            while (_index > 0 && _score.Events[_index - 1].TimeUs > newElapsed)
+            while (_index > 0 && _score.Events[_index - 1].TimeUs > newElapsed){
                 _index--;
+            }
         }
-
         _pausedElapsedUs = newElapsed;
 
-        if (wasPlaying)
+        if (IsPlaying){
             Play();
-
+        }
         StateChanged?.Invoke();
     }
-
-    private void Tick(long resumeOffsetUs)
-    {
+    /// <summary>
+    /// 定时器回调：将经过时间与事件列表对比，触发所有到期的事件。
+    /// </summary>
+    /// <param name="resumeOffsetUs">暂停后恢复时的已播放偏移量（微秒），首次播放为 0。</param>
+    private void Tick(long resumeOffsetUs) {
         if (_score == null) return;
-
+        // 当前总经过时间 = 已偏移量 + Stopwatch 增量
         long elapsedUs = resumeOffsetUs + (_stopwatch.ElapsedMilliseconds * 1000);
-
-        while (_index < _score.Events.Count && _score.Events[_index].TimeUs <= elapsedUs)
-        {
+        // 不是时间刚好等于按下时间点的时候执行，而是当前时间超过按下时间点一些的时候就执行。
+        while (_index < _score.Events.Count && _score.Events[_index].TimeUs <= elapsedUs) {
             var evt = _score.Events[_index];
-            if (evt.IsPress)
-            {
-                if (!_pressedKeys.Contains(evt.Note))
-                {
+            if (evt.IsPress) {
+                // 避免重复按下同一键
+                if (!_pressedKeys.Contains(evt.Note)) {
                     _performer.KeyPress(evt.Note);
                     _pressedKeys.Add(evt.Note);
                 }
             }
-            else
-            {
+            else {
                 _performer.KeyRelease(evt.Note);
                 _pressedKeys.Remove(evt.Note);
             }
@@ -243,16 +242,14 @@ public class KeyPianoPlayer(IPerformer? performer = null) : 替身使者, IDispo
     }
 
     // ==================== 辅助方法 ====================
-
-    private void ReleaseAll()
-    {
-        foreach (var key in _pressedKeys.ToList())
+    private void ReleaseAll() {
+        foreach (var key in _pressedKeys.ToList()) {
             _performer.KeyRelease(key);
+        }
         _pressedKeys.Clear();
     }
 
-    private long GetElapsedMicroseconds()
-    {
+    private long GetElapsedMicroseconds() {
         if (_timer == null) return _pausedElapsedUs;
         return _pausedElapsedUs + (_stopwatch.ElapsedMilliseconds * 1000);
     }
