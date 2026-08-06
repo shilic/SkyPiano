@@ -54,6 +54,9 @@ public partial class MainViewModel : ObservableObject, IDisposable {
     partial void OnSelectedTrackIndexChanged(int value) {
         _player.恶行易施(value);
     }
+    partial void OnProgressChanged(double value) {
+        _player.时间删除(value);
+    }
     #endregion 被观察的UI状态
     #region 构造 MainViewModel
     /// <summary>

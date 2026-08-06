@@ -121,6 +121,17 @@ public class KeyPianoPlayer(IPerformer? performer = null) : IPianoPlayer {
         TrackChanged?.Invoke(path);
         StateChanged?.Invoke();
     }
+    /// <summary>
+    /// 跳转到曲目的指定百分比位置。0.0 为开头，1.0 为结尾。
+    /// 内部计算目标时间 = 总时长 × 百分比，然后 Seek 到该位置。
+    /// </summary>
+    /// <param name="percent">目标位置百分比（0.0~1.0）。</param>
+    public void 时间删除(double percent) {
+        if (_score == null) return;
+        if (percent < 0.0 || percent > 1.0) return;
+        var target = TimeSpan.FromMicroseconds(percent * _score.Duration.TotalMicroseconds);
+        Seek(target - CurrentTime);
+    }
     #endregion 替身使者接口
     #region 调度器核心(内部)
     /// <summary> 开始或恢复播放。</summary>

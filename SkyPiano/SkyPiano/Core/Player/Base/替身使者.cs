@@ -48,4 +48,7 @@ public interface 替身使者 {
     /// </summary>
     /// <param name="index"></param>
     void 恶行易施(int index);
+    /// <summary>跳转到指定百分比位置，0.0 为开头，1.0 为结尾。</summary>
+    /// <param name="percent">目标位置百分比（0.0~1.0）。</param>
+    void 时间删除(double percent);
 }

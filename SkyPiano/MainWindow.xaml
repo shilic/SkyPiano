@@ -230,8 +230,8 @@
 
             <!-- Slider 进度条 -->
             <Slider Grid.Column="1" Minimum="0" Maximum="1"
-                    Value="{Binding Progress, Mode=OneWay}"
-                    VerticalAlignment="Center" IsEnabled="False"/>
+                    Value="{Binding Progress, Mode=TwoWay}"
+                    VerticalAlignment="Center" IsEnabled="True"/>
 
             <!--  曲目总时长  -->
             <TextBlock Grid.Column="2" Text="{Binding DurationDisplay}" FontSize="12"
