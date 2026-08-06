@@ -20,7 +20,7 @@ public partial class MainWindow : Window {
             System.Globalization.CultureInfo.GetCultureInfo("en-US");
 
         GlobalHotkey.Instance.Initialize(this);
-        // ע��һ��ȫ���ȼ� Ctrl + Shift + Space ����������/��ͣ����
+        // 注册全局热键 Ctrl + Shift + Space → 播放 / 暂停
         GlobalHotkey.Instance.Register(
             id: 1, 
             modifiers: ModifierKeys.Control | ModifierKeys.Shift, 
