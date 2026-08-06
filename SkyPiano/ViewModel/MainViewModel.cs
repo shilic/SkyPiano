@@ -63,6 +63,7 @@ public partial class MainViewModel : ObservableObject, IDisposable {
     /// 构造 MainViewModel，创建播放器并注册事件回调。
     /// </summary>
     public MainViewModel() {
+        // 默认使用键盘模拟器演奏，也可以通过依赖注入传入其他 IPerformer 实现。
         _player = new KeyPianoPlayer();
         // 注册三个 Model 层事件
         _player.TrackChanged += OnTrackChanged;
