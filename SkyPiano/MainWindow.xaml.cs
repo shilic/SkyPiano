@@ -20,10 +20,10 @@ public partial class MainWindow : Window {
             System.Globalization.CultureInfo.GetCultureInfo("en-US");
 
         GlobalHotkey.Instance.Initialize(this);
-        // 注册全局热键 Ctrl + Shift + Space → 播放 / 暂停
+        // 注册全局热键 Ctrl + Alt + Space → 播放 / 暂停
         GlobalHotkey.Instance.Register(
             id: 1, 
-            modifiers: ModifierKeys.Control | ModifierKeys.Shift, 
+            modifiers: ModifierKeys.Control | ModifierKeys.Alt,
             key: Key.Space,
             callback: () => {
                 if (vm.PlayPauseCommand.CanExecute(null)) vm.PlayPauseCommand.Execute(null);
