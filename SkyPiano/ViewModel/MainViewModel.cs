@@ -17,8 +17,9 @@ public partial class MainViewModel : ObservableObject, IDisposable {
     /// <summary>键盘钢琴播放器接口，通过构造函数注入，默认使用 KeyPianoPlayer。</summary>
     private readonly IPianoPlayer _player;
     /// <summary> 默认 MIDI 文件夹路径：用户文档目录下的 "SkyPiano/MIDI"。</summary>
-    private static readonly string DefaultMidiFolder = System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SkyPiano", "MIDI");
+    // System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SkyPiano", "MIDI")
+    // appData\MyScore
+    private static readonly string DefaultMidiFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appData", "MyScore");
     #endregion 内部只读字段
     #region 被观察的属性（UI 绑定）
     /// <summary> 播放列表中的所有曲目项，供 UI 的 ListBox 绑定。</summary>
