@@ -1,0 +1,3 @@
+# 原神风物之琴自动演奏器`SkyPiano`使用指南
+
+见网址：[https://shilic.github.io/posts/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6/%E9%A1%B9%E7%9B%AE/SkyPiano/%E5%8E%9F%E7%A5%9E%E9%A3%8E%E7%89%A9%E4%B9%8B%E7%90%B4%E8%87%AA%E5%8A%A8%E6%BC%94%E5%A5%8F%E5%99%A8SkyPiano%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97.html](https://shilic.github.io/posts/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6/%E9%A1%B9%E7%9B%AE/SkyPiano/%E5%8E%9F%E7%A5%9E%E9%A3%8E%E7%89%A9%E4%B9%8B%E7%90%B4%E8%87%AA%E5%8A%A8%E6%BC%94%E5%A5%8F%E5%99%A8SkyPiano%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97.html)
